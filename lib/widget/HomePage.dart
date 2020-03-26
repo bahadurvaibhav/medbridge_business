@@ -72,6 +72,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Push Messaging Demo'),
+        automaticallyImplyLeading: false,
       ),
       body: Material(
         child: Column(
