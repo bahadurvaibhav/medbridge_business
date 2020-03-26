@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">472112449526-7mk1qqrt39cngog0f46fng90qcj54u5a.apps.googleusercontent.com</string>
+    <string name="firebase_database_url" translatable="false">https://medbridge-business.firebaseio.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">472112449526</string>
+    <string name="google_api_key" translatable="false">AIzaSyATT0yBtB8YodDxzN4hH1eJqsDibgMnQJs</string>
+    <string name="google_app_id" translatable="false">1:472112449526:android:790c84ec7389a8438c69d7</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyATT0yBtB8YodDxzN4hH1eJqsDibgMnQJs</string>
+    <string name="google_storage_bucket" translatable="false">medbridge-business.appspot.com</string>
+    <string name="project_id" translatable="false">medbridge-business</string>
+</resources>

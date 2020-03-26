@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "472112449526",
+    "firebase_url": "https://medbridge-business.firebaseio.com",
+    "project_id": "medbridge-business",
+    "storage_bucket": "medbridge-business.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:472112449526:android:790c84ec7389a8438c69d7",
+        "android_client_info": {
+          "package_name": "in.medbridge.business"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "472112449526-4f1ac2kqa5go7liqtvkpi3dkbqj578hf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.medbridge.business",
+            "certificate_hash": "2d3b1e2c67f8d3cc132267b9b958d1e7e74842f6"
+          }
+        },
+        {
+          "client_id": "472112449526-7mk1qqrt39cngog0f46fng90qcj54u5a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATT0yBtB8YodDxzN4hH1eJqsDibgMnQJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "472112449526-7mk1qqrt39cngog0f46fng90qcj54u5a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
