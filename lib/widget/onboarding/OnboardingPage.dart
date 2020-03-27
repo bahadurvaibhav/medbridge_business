@@ -1,7 +1,11 @@
+import 'dart:convert' as JSON;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
@@ -44,6 +48,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       'email',
     ],
   );
+  final facebookLogin = FacebookLogin();
 
   Future<void> _signInGoogle() async {
     try {
@@ -60,6 +65,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
     } catch (error) {
       print(error);
     }
+  }
+
+  _signInFacebook() async {
+    print('Facebook sign in clicked');
+    final result = await facebookLogin.logInWithReadPermissions(['email']);
+    switch (result.status) {
+      case FacebookLoginStatus.loggedIn:
+        print('Facebook sign in successful');
+        final token = result.accessToken.token;
+        final graphResponse = await http.get(
+            'https://graph.facebook.com/v2.12/me?fields=name,picture,email&access_token=${token}');
+        final profile = JSON.jsonDecode(graphResponse.body);
+        print(profile);
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setBool(IS_LOGGED_IN, true);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+        break;
+      case FacebookLoginStatus.cancelledByUser:
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setBool(IS_LOGGED_IN, false);
+        break;
+      case FacebookLoginStatus.error:
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setBool(IS_LOGGED_IN, false);
+        break;
+    }
+  }
+
+  _logoutFacebook() async {
+    facebookLogin.logOut();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(IS_LOGGED_IN, false);
   }
 
   @override
@@ -129,7 +169,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   "Facebook",
                   style: TextStyle(color: Colors.white),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  _signInFacebook();
+                },
               ),
             ],
           ),
