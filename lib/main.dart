@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/widget/SplashPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  /*SharedPreferences.setMockInitialValues({});*/
+  // TODO: remove when login functionality implemented
+  SharedPreferences.setMockInitialValues({
+    IS_LOGGED_IN: false,
+  });
   runApp(MyApp());
 }
 
