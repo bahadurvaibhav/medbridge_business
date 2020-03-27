@@ -1,4 +1,4 @@
-package in.medbridge.medbridge_business;
+package in.medbridge.business;
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;

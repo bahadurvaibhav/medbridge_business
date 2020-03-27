@@ -7,20 +7,21 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  /*GoogleSignIn _googleSignIn = GoogleSignIn(
+  GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
       'email',
     ],
-  );*/
+  );
 
   Future<void> _handleSignIn() async {
-    /*try {
+    try {
       print('Google sign in clicked');
       GoogleSignInAccount googleSignInAccount = await _googleSignIn.signIn();
       print('Google sign in successful');
+      print(googleSignInAccount.toString());
     } catch (error) {
       print(error);
-    }*/
+    }
   }
 
   @override
