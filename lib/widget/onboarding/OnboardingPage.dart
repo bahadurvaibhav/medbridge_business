@@ -1,11 +1,12 @@
-import 'dart:convert' as JSON;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:medbridge_business/gateway/FacebookLoginResponse.dart';
+import 'package:medbridge_business/gateway/ResponseWithId.dart';
+import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
@@ -50,18 +51,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
   );
   final facebookLogin = FacebookLogin();
 
-  Future<void> _signInGoogle() async {
+  _signInGoogle() async {
     try {
       print('Google sign in clicked');
-      _googleSignIn.signIn().whenComplete(() async {
-        print('Google sign in successful');
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setBool(IS_LOGGED_IN, true);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      });
+      GoogleSignInAccount profile = await _googleSignIn.signIn();
+      print('Google sign in successful');
+      register(profile.displayName, profile.email, profile.id, "", context);
     } catch (error) {
       print(error);
     }
@@ -76,23 +71,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
         final token = result.accessToken.token;
         final graphResponse = await http.get(
             'https://graph.facebook.com/v2.12/me?fields=name,picture,email&access_token=${token}');
-        final profile = JSON.jsonDecode(graphResponse.body);
+        FacebookLoginResponse profile =
+            facebookLoginResponseFromJson(graphResponse.body);
         print(profile);
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setBool(IS_LOGGED_IN, true);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
+        register(profile.name, profile.email, "", profile.id, context);
         break;
       case FacebookLoginStatus.cancelledByUser:
+        print('Facebook sign in cancelledByUser');
         final prefs = await SharedPreferences.getInstance();
         prefs.setBool(IS_LOGGED_IN, false);
         break;
       case FacebookLoginStatus.error:
+        print('Facebook sign in error');
         final prefs = await SharedPreferences.getInstance();
         prefs.setBool(IS_LOGGED_IN, false);
         break;
+    }
+  }
+
+  register(String name, String email, String googleId, String facebookId,
+      BuildContext context) async {
+    var body = {
+      "name": name,
+      "email": email,
+      "googleId": googleId,
+      "facebookId": facebookId,
+    };
+    final response = await post(
+        'http://connectinghealthcare.in/api/business/register.php', body);
+    var loginResponse = responseWithIdFromJson(response.body);
+    if (loginResponse.response.status == 200) {
+      print("Register API successful");
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString(NAME, name);
+      prefs.setString(EMAIL, email);
+      prefs.setString(GOOGLE_ID, googleId);
+      prefs.setString(FACEBOOK_ID, facebookId);
+      prefs.setBool(IS_LOGGED_IN, true);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } else if (loginResponse.response.status == 203) {
+      print("Register API failure");
     }
   }
 
