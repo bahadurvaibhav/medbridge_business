@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:medbridge_business/gateway/Response.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/constants.dart';
-import 'package:http/http.dart' as http;
 import 'package:medbridge_business/util/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as path;
@@ -18,63 +18,95 @@ class AddPatientPage extends StatefulWidget {
 class _AddPatientPageState extends State<AddPatientPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: <Widget>[
-            RaisedButton.icon(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(2.0)),
-              color: primary,
-              icon: Icon(
-                Icons.file_upload,
-                color: Colors.white,
+    return WillPopScope(
+      child: Scaffold(
+        body: SafeArea(
+          child: Row(
+            children: <Widget>[
+              RaisedButton.icon(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2.0)),
+                color: primary,
+                icon: Icon(
+                  Icons.file_upload,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  "Choose File",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: _chooseFileClicked,
               ),
-              label: Text(
-                "Choose File",
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () async {
-                File file = await FilePicker.getFile();
-                print('File picked');
-                final prefs = await SharedPreferences.getInstance();
-                var userId = prefs.getInt(USER_ID).toString();
-                FormData formData = new FormData.from({
-                  "file": new UploadFileInfo(file, path.basename(file.path)),
-                  "apiKey": API_KEY,
-                  "userId": userId,
-                });
-                Response response =
-                    await Dio().post(UPLOAD_DOCUMENT_URL, data: formData);
-                print("File upload response: $response");
-                /*http.MultipartRequest request = http.MultipartRequest(
-                  'POST',
-                  Uri.parse(UPLOAD_DOCUMENT_URL),
-                );
-                print('URL: ' + UPLOAD_DOCUMENT_URL);
-                request.files.add(
-                  http.MultipartFile(
-                    'file',
-                    file.readAsBytes().asStream(),
-                    file.lengthSync(),
-                  ),
-                );
-                request.fields['apiKey'] = API_KEY;
-                final prefs = await SharedPreferences.getInstance();
-                var userId = prefs.getInt(USER_ID).toString();
-                request.fields['userId'] = userId;
-                print('apiKey: ' + API_KEY + '; userId: ' + userId);
-                http.StreamedResponse response = await request.send();
-                print('File sent with statusCode: ' +
-                    response.statusCode.toString() +
-                    '; reasonPhrase: ' +
-                    response.reasonPhrase);
-                String responseBody = await response.stream.bytesToString();
-                print(responseBody);*/
-              },
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  _chooseFileClicked() async {
+    File file = await FilePicker.getFile();
+    print('File picked');
+    if (!await isFileValid(file)) {
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    var userId = prefs.getInt(USER_ID).toString();
+    FormData formData = new FormData.from({
+      "file": new UploadFileInfo(file, path.basename(file.path)),
+      "apiKey": API_KEY,
+      "userId": userId,
+    });
+    Response response = await Dio().post(UPLOAD_DOCUMENT_URL, data: formData);
+    StatusMsg statusMsg = responseFromJson(response.data);
+    if (statusMsg.status == 203) {
+      // Unable to upload due to database or upload error
+    } else if (statusMsg.status == 202) {
+      // File extension not allowed
+      showDocumentErrorDialog(
+          DOCUMENT_INVALID_EXTENSION_TITLE,
+          DOCUMENT_INVALID_EXTENSION_SUBTITLE +
+              ALLOWED_DOCUMENT_EXTENSIONS.toString());
+    } else if (statusMsg.status == 201) {
+      // File bigger than limit
+      showDocumentErrorDialog(DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
+          DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE);
+    }
+    print("File upload response: $response");
+  }
+
+  Future<bool> isFileValid(File file) async {
+    String fileExtension = path.extension(file.path);
+    if (!ALLOWED_DOCUMENT_EXTENSIONS.contains(fileExtension.toLowerCase())) {
+      // File not valid extension
+      showDocumentErrorDialog(
+          DOCUMENT_INVALID_EXTENSION_TITLE,
+          DOCUMENT_INVALID_EXTENSION_SUBTITLE +
+              ALLOWED_DOCUMENT_EXTENSIONS.toString());
+      return false;
+    }
+    int fileSize = await file.length();
+    if (fileSize > DOCUMENT_MAX_SIZE * 1000000) {
+      // File bigger than limit
+      showDocumentErrorDialog(DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
+          DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE);
+      return false;
+    }
+    return true;
+  }
+
+  showDocumentErrorDialog(String title, String subtitle) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(subtitle),
+        actions: <Widget>[
+          FlatButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Close'),
+          ),
+        ],
       ),
     );
   }
