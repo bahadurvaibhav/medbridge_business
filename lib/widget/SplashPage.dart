@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:medbridge_business/util/preferences.dart';
+import 'package:medbridge_business/widget/AddPatientPage.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
 import 'package:medbridge_business/widget/onboarding/OnboardingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,8 +21,9 @@ class SplashPage extends StatelessWidget {
         Navigator.pop(context);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => AddPatientPage()),
         );
+        // FIXME: Change to HomePage
       }
     });
   }
