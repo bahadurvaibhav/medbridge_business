@@ -62,9 +62,9 @@ class _AddPatientPageState extends State<AddPatientPage> {
       ),
     );
     File file = await FilePicker.getFile();
-    _scaffoldKey.currentState.hideCurrentSnackBar();
     print('File picked');
     if (!await isFileValid(file)) {
+      _scaffoldKey.currentState.hideCurrentSnackBar();
       return;
     }
     final prefs = await SharedPreferences.getInstance();
@@ -75,6 +75,23 @@ class _AddPatientPageState extends State<AddPatientPage> {
       "userId": userId,
     });
     Response response = await Dio().post(UPLOAD_DOCUMENT_URL, data: formData);
+    _scaffoldKey.currentState.hideCurrentSnackBar();
+    _scaffoldKey.currentState.showSnackBar(
+      new SnackBar(
+        duration: new Duration(seconds: 4),
+        content: new Row(
+          children: <Widget>[
+            Icon(
+              Icons.check,
+              color: Colors.blue,
+              size: 40,
+            ),
+            SizedBox(width: 10),
+            new Text("File uploaded")
+          ],
+        ),
+      ),
+    );
     StatusMsg statusMsg = responseFromJson(response.data);
     if (statusMsg.status == 203) {
       // Unable to upload due to database or upload error
