@@ -8,7 +8,7 @@ ResponseWithId responseWithIdFromJson(String str) =>
 String responseWithIdToJson(ResponseWithId data) => json.encode(data.toJson());
 
 class ResponseWithId {
-  Response response;
+  StatusMsg response;
   int referenceId;
 
   ResponseWithId({
@@ -17,7 +17,7 @@ class ResponseWithId {
   });
 
   factory ResponseWithId.fromJson(Map<String, dynamic> json) => ResponseWithId(
-        response: Response.fromJson(json["response"]),
+        response: StatusMsg.fromJson(json["response"]),
         referenceId: json["referenceId"],
       );
 

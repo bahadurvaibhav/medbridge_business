@@ -1,13 +1,19 @@
-class Response {
+import 'dart:convert';
+
+StatusMsg responseFromJson(String str) => StatusMsg.fromJson(json.decode(str));
+
+String responseToJson(StatusMsg data) => json.encode(data.toJson());
+
+class StatusMsg {
   int status;
   String msg;
 
-  Response({
+  StatusMsg({
     this.status,
     this.msg,
   });
 
-  factory Response.fromJson(Map<String, dynamic> json) => Response(
+  factory StatusMsg.fromJson(Map<String, dynamic> json) => StatusMsg(
         status: json["status"],
         msg: json["msg"],
       );
