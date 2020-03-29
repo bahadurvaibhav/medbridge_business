@@ -10,16 +10,21 @@ import 'package:medbridge_business/util/preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as path;
 
+final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
 class AddPatientPage extends StatefulWidget {
   @override
   _AddPatientPageState createState() => _AddPatientPageState();
 }
 
 class _AddPatientPageState extends State<AddPatientPage> {
+  bool documentUploading = false;
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       child: Scaffold(
+        key: _scaffoldKey,
         body: SafeArea(
           child: Row(
             children: <Widget>[
@@ -45,7 +50,19 @@ class _AddPatientPageState extends State<AddPatientPage> {
   }
 
   _chooseFileClicked() async {
+    _scaffoldKey.currentState.showSnackBar(
+      new SnackBar(
+        content: new Row(
+          children: <Widget>[
+            new CircularProgressIndicator(),
+            SizedBox(width: 10),
+            new Text("Uploading Document...")
+          ],
+        ),
+      ),
+    );
     File file = await FilePicker.getFile();
+    _scaffoldKey.currentState.hideCurrentSnackBar();
     print('File picked');
     if (!await isFileValid(file)) {
       return;
