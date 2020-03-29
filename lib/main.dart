@@ -4,10 +4,10 @@ import 'package:medbridge_business/widget/SplashPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  // TODO: remove when login functionality implemented
+  /*// add to logout
   SharedPreferences.setMockInitialValues({
     IS_LOGGED_IN: false,
-  });
+  });*/
   runApp(MyApp());
 }
 
