@@ -8,6 +8,7 @@ import 'package:medbridge_business/gateway/FacebookLoginResponse.dart';
 import 'package:medbridge_business/gateway/ResponseWithId.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
+import 'package:medbridge_business/util/constants.dart';
 import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,6 +97,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       "email": email,
       "googleId": googleId,
       "facebookId": facebookId,
+      "apiKey": API_KEY,
     };
     final response = await post(
         'http://connectinghealthcare.in/api/business/register.php', body);
@@ -103,6 +105,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (loginResponse.response.status == 200) {
       print("Register API successful");
       final prefs = await SharedPreferences.getInstance();
+      prefs.setInt(USER_ID, loginResponse.referenceId);
       prefs.setString(NAME, name);
       prefs.setString(EMAIL, email);
       prefs.setString(GOOGLE_ID, googleId);
