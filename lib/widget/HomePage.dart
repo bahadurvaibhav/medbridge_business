@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:medbridge_business/gateway/StatisticsResponse.dart';
+import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/constants.dart';
+import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/widget/AddPatientPage.dart';
-import 'package:medbridge_business/widget/PatientsPage.dart';
-import 'package:medbridge_business/widget/onboarding/OnboardingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,68 +13,35 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-  PageController pageController = PageController(initialPage: 0);
+  String totalPatients = "...";
+  String treatmentsOngoing = "...";
+  String treatmentsCompleted = "...";
+
+  @override
+  void initState() {
+    getStats();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      child: Scaffold(
-        appBar: appBar(),
-        body: SafeArea(
-          child: PageView(
-            physics: NeverScrollableScrollPhysics(),
-            onPageChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            controller: pageController,
-            children: <Widget>[
-              homePage(),
-              PatientsPage(),
-            ],
-          ),
-        ),
-        bottomNavigationBar: bottomNavigationBar(),
-      ),
-    );
-  }
-
-  Widget bottomNavigationBar() {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          title: Text('HOME'),
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          title: Text('PATIENTS'),
-        ),
-      ],
-      currentIndex: _selectedIndex,
-      selectedItemColor: primary,
-      onTap: (index) => pageController.jumpToPage(index),
-    );
-  }
-
-  Widget homePage() {
     return Material(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: <Widget>[
-            totalPatientsCard(35),
+            totalPatientsCard(totalPatients),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Row(
                 children: <Widget>[
                   Expanded(
-                    child: treatmentInfoCards(TREATMENTS_ONGOING, 7),
+                    child: treatmentInfoCards(
+                        TREATMENTS_ONGOING, treatmentsOngoing),
                   ),
                   Expanded(
-                    child: treatmentInfoCards(TREATMENTS_COMPLETED, 16),
+                    child: treatmentInfoCards(
+                        TREATMENTS_COMPLETED, treatmentsCompleted),
                   ),
                 ],
               ),
@@ -95,34 +61,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget appBar() {
-    return new AppBar(
-      actions: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 20.0, 0),
-          child: GestureDetector(
-            onTap: showLogoutDialog,
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  Icons.exit_to_app,
-                  color: Colors.white,
-                ),
-                SizedBox(width: 5),
-                Text(
-                  'Logout',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        )
-      ],
-      automaticallyImplyLeading: false,
-    );
+  getStats() async {
+    print("getStatistics API called");
+    final prefs = await SharedPreferences.getInstance();
+    int addedBy = prefs.getInt(USER_ID);
+    var body = {
+      "apiKey": API_KEY,
+      "userId": addedBy.toString(),
+    };
+    final response = await post(GET_STATISTICS_URL, body);
+    print(response.body);
+    StatisticsResponse stats = statsResponseFromJson(response.body);
+    setState(() {
+      totalPatients = stats.totalPatients;
+      treatmentsOngoing = stats.treatmentsOngoing;
+      treatmentsCompleted = stats.treatmentsCompleted;
+    });
   }
 
-  Widget totalPatientsCard(int value) {
+  Widget totalPatientsCard(String value) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(30.0),
@@ -134,7 +91,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 20),
             ),
             Text(
-              value.toString(),
+              value,
               style: TextStyle(
                 fontSize: 40,
                 color: primary,
@@ -147,7 +104,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget treatmentInfoCards(String title, int value) {
+  Widget treatmentInfoCards(String title, String value) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -159,7 +116,7 @@ class _HomePageState extends State<HomePage> {
               textAlign: TextAlign.center,
             ),
             Text(
-              value.toString(),
+              value,
               style: TextStyle(
                 fontSize: 40,
                 color: primary,
@@ -204,35 +161,6 @@ class _HomePageState extends State<HomePage> {
             ),*/
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> showLogoutDialog() {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Logout'),
-        content: Text('Are you sure?'),
-        actions: <Widget>[
-          FlatButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('No'),
-          ),
-          FlatButton(
-            onPressed: () async {
-              SharedPreferences preferences =
-                  await SharedPreferences.getInstance();
-              preferences.clear();
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => OnboardingPage()),
-              );
-            },
-            child: Text('Yes'),
-          ),
-        ],
       ),
     );
   }

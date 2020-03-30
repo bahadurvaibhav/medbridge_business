@@ -10,7 +10,7 @@ import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/constants.dart';
 import 'package:medbridge_business/util/preferences.dart';
-import 'package:medbridge_business/widget/HomePage.dart';
+import 'package:medbridge_business/widget/MainNavigationPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroItem {
@@ -112,7 +112,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       prefs.setBool(IS_LOGGED_IN, true);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => new HomePage()),
+        MaterialPageRoute(builder: (context) => new MainNavigationPage()),
       );
     } else if (loginResponse.response.status == 203) {
       print("Register API failure");
