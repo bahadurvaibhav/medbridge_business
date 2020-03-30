@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:medbridge_business/gateway/HospitalResponse.dart';
-import 'package:medbridge_business/gateway/Response.dart';
+import 'package:medbridge_business/gateway/ResponseWithId.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/constants.dart';
@@ -28,6 +28,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
   bool documentUploading = false;
   List<DocumentMetadata> uploadedDocuments = new List();
   TextEditingController fileDescriptionController = new TextEditingController();
+  FocusNode fileDescriptionFocus = FocusNode();
   String description = "";
   final _uploadDocumentFormKey = GlobalKey<FormState>();
 
@@ -50,6 +51,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
   FocusNode patientAccommodationAssistFocus = FocusNode();
   TextEditingController hospitalTypeAheadController =
       new TextEditingController();
+  FocusNode hospitalTypeAheadFocus = FocusNode();
 
   String patientPhoneCode = "+91";
   String patientCountry = "India";
@@ -74,6 +76,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
   @override
   void dispose() {
     fileDescriptionController.dispose();
+    fileDescriptionFocus.dispose();
     patientNameController.dispose();
     patientNameFocus.dispose();
     patientPhoneController.dispose();
@@ -88,6 +91,8 @@ class _AddPatientPageState extends State<AddPatientPage> {
     patientTravelAssistFocus.dispose();
     patientAccommodationAssistController.dispose();
     patientAccommodationAssistFocus.dispose();
+    hospitalTypeAheadController.dispose();
+    hospitalTypeAheadFocus.dispose();
     super.dispose();
   }
 
@@ -96,7 +101,6 @@ class _AddPatientPageState extends State<AddPatientPage> {
     return WillPopScope(
       child: Scaffold(
         key: _scaffoldKey,
-        bottomNavigationBar: bottomBar(),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -109,6 +113,8 @@ class _AddPatientPageState extends State<AddPatientPage> {
                   patientProblemDetails(),
                   divider(),
                   reports(),
+                  divider(),
+                  submitButton(),
                 ],
               ),
             ),
@@ -118,24 +124,27 @@ class _AddPatientPageState extends State<AddPatientPage> {
     );
   }
 
-  Widget bottomBar() {
+  submitClicked() {}
+
+  Widget submitButton() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        RaisedButton.icon(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(2.0)),
-          color: primary,
-          icon: Icon(
-            Icons.file_upload,
-            color: Colors.white,
+        Expanded(
+          child: RaisedButton(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0)),
+            color: primary,
+            child: Text(
+              "Submit",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                letterSpacing: 0.7,
+              ),
+            ),
+            onPressed: submitClicked,
           ),
-          label: Text(
-            "Submit",
-            style: TextStyle(color: Colors.white),
-          ),
-          onPressed: _chooseFileClicked,
         ),
       ],
     );
@@ -170,7 +179,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
           focusNode: patientPreferredDestinationFocus,
           onFieldSubmitted: (term) {
             patientPreferredDestinationFocus.unfocus();
-            FocusScope.of(context).requestFocus(patientTravelAssistFocus);
+            FocusScope.of(context).requestFocus(hospitalTypeAheadFocus);
           },
           style: TextStyle(color: Colors.blue),
           validator: validateName,
@@ -200,7 +209,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
           focusNode: patientAccommodationAssistFocus,
           onFieldSubmitted: (term) {
             patientAccommodationAssistFocus.unfocus();
-            /*FocusScope.of(context).requestFocus(patientPhoneFocus);*/
+            FocusScope.of(context).requestFocus(fileDescriptionFocus);
           },
           style: TextStyle(color: Colors.blue),
           validator: validateName,
@@ -216,7 +225,12 @@ class _AddPatientPageState extends State<AddPatientPage> {
     return TypeAheadFormField(
       textFieldConfiguration: TextFieldConfiguration(
         controller: hospitalTypeAheadController,
+        focusNode: hospitalTypeAheadFocus,
         decoration: InputDecoration(labelText: 'Preferred hospital'),
+        onSubmitted: (term) {
+          hospitalTypeAheadFocus.unfocus();
+          FocusScope.of(context).requestFocus(patientTravelAssistFocus);
+        },
       ),
       suggestionsCallback: (pattern) {
         List<HospitalResponse> filteredHospitals = new List();
@@ -371,6 +385,11 @@ class _AddPatientPageState extends State<AddPatientPage> {
               Expanded(
                 child: TextFormField(
                   controller: fileDescriptionController,
+                  textInputAction: TextInputAction.done,
+                  focusNode: fileDescriptionFocus,
+                  onFieldSubmitted: (term) {
+                    fileDescriptionFocus.unfocus();
+                  },
                   decoration:
                       new InputDecoration(hintText: 'Enter description'),
                   validator: validateName,
@@ -434,17 +453,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
       return;
     }
     description = fileDescriptionController.text;
-    _scaffoldKey.currentState.showSnackBar(
-      new SnackBar(
-        content: new Row(
-          children: <Widget>[
-            new CircularProgressIndicator(),
-            SizedBox(width: 10),
-            new Text("Uploading Document...")
-          ],
-        ),
-      ),
-    );
+    _scaffoldKey.currentState.showSnackBar(uploadingDocumentSnackbar());
     File file = await FilePicker.getFile();
     print('File picked');
     fileDescriptionController.text = description;
@@ -461,16 +470,16 @@ class _AddPatientPageState extends State<AddPatientPage> {
       "userId": userId,
     });
     Response response = await Dio().post(UPLOAD_DOCUMENT_URL, data: formData);
-    StatusMsg statusMsg = responseFromJson(response.data);
-    if (statusMsg.status == 203) {
+    ResponseWithId statusMsg = responseWithIdFromJson(response.data);
+    if (statusMsg.response.status == 203) {
       // Unable to upload due to database or upload error
-    } else if (statusMsg.status == 202) {
+    } else if (statusMsg.response.status == 202) {
       // File extension not allowed
       showDocumentErrorDialog(
           DOCUMENT_INVALID_EXTENSION_TITLE,
           DOCUMENT_INVALID_EXTENSION_SUBTITLE +
               ALLOWED_DOCUMENT_EXTENSIONS.toString());
-    } else if (statusMsg.status == 201) {
+    } else if (statusMsg.response.status == 201) {
       // File bigger than limit
       showDocumentErrorDialog(DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
           DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE);
@@ -478,27 +487,41 @@ class _AddPatientPageState extends State<AddPatientPage> {
     print("File upload response: $response");
     String fileDescription = fileDescriptionController.text;
     uploadedDocuments.add(
-      new DocumentMetadata(fileDescription, fileName),
+      new DocumentMetadata(statusMsg.referenceId, fileDescription, fileName),
     );
     fileDescriptionController.text = "";
     _scaffoldKey.currentState.hideCurrentSnackBar();
-    _scaffoldKey.currentState.showSnackBar(
-      new SnackBar(
-        duration: new Duration(seconds: 4),
-        content: new Row(
-          children: <Widget>[
-            Icon(
-              Icons.check,
-              color: Colors.blue,
-              size: 40,
-            ),
-            SizedBox(width: 10),
-            new Text("File uploaded")
-          ],
-        ),
+    _scaffoldKey.currentState.showSnackBar(fileUploadedSnackbar());
+    setState(() {});
+  }
+
+  SnackBar fileUploadedSnackbar() {
+    return new SnackBar(
+      duration: new Duration(seconds: 4),
+      content: new Row(
+        children: <Widget>[
+          Icon(
+            Icons.check,
+            color: Colors.blue,
+            size: 40,
+          ),
+          SizedBox(width: 10),
+          new Text("File uploaded")
+        ],
       ),
     );
-    setState(() {});
+  }
+
+  SnackBar uploadingDocumentSnackbar() {
+    return new SnackBar(
+      content: new Row(
+        children: <Widget>[
+          new CircularProgressIndicator(),
+          SizedBox(width: 10),
+          new Text("Uploading Document...")
+        ],
+      ),
+    );
   }
 
   Future<bool> isFileValid(File file) async {
@@ -539,8 +562,9 @@ class _AddPatientPageState extends State<AddPatientPage> {
 }
 
 class DocumentMetadata {
+  int documentId;
   String description;
   String fileName;
 
-  DocumentMetadata(this.description, this.fileName);
+  DocumentMetadata(this.documentId, this.description, this.fileName);
 }
