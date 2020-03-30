@@ -99,8 +99,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       "facebookId": facebookId,
       "apiKey": API_KEY,
     };
-    final response = await post(
-        'http://connectinghealthcare.in/api/business/register.php', body);
+    final response = await post(LOGIN_URL, body);
     var loginResponse = responseWithIdFromJson(response.body);
     if (loginResponse.response.status == 200) {
       print("Register API successful");

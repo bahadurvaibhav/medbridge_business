@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/constants.dart';
 import 'package:medbridge_business/widget/AddPatientPage.dart';
+import 'package:medbridge_business/widget/PatientsPage.dart';
 import 'package:medbridge_business/widget/onboarding/OnboardingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,6 +14,114 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+  PageController pageController = PageController(initialPage: 0);
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      child: Scaffold(
+        appBar: appBar(),
+        body: SafeArea(
+          child: PageView(
+            physics: NeverScrollableScrollPhysics(),
+            onPageChanged: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            controller: pageController,
+            children: <Widget>[
+              homePage(),
+              PatientsPage(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: bottomNavigationBar(),
+      ),
+    );
+  }
+
+  Widget bottomNavigationBar() {
+    return BottomNavigationBar(
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          title: Text('HOME'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people),
+          title: Text('PATIENTS'),
+        ),
+      ],
+      currentIndex: _selectedIndex,
+      selectedItemColor: primary,
+      onTap: (index) => pageController.jumpToPage(index),
+    );
+  }
+
+  Widget homePage() {
+    return Material(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: <Widget>[
+            totalPatientsCard(35),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: treatmentInfoCards(TREATMENTS_ONGOING, 7),
+                  ),
+                  Expanded(
+                    child: treatmentInfoCards(TREATMENTS_COMPLETED, 16),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddPatientPage()),
+                );
+              },
+              child: addNewPatient(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget appBar() {
+    return new AppBar(
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 20.0, 0),
+          child: GestureDetector(
+            onTap: showLogoutDialog,
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  Icons.exit_to_app,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 5),
+                Text(
+                  'Logout',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+      automaticallyImplyLeading: false,
+    );
+  }
+
   Widget totalPatientsCard(int value) {
     return Card(
       child: Padding(
@@ -122,70 +233,6 @@ class _HomePageState extends State<HomePage> {
             child: Text('Yes'),
           ),
         ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      child: Scaffold(
-        appBar: new AppBar(
-          actions: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 20.0, 0),
-              child: Column(
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(
-                      Icons.exit_to_app,
-                      color: Colors.white,
-                    ),
-                    onPressed: () async {
-                      showLogoutDialog();
-                    },
-                  ),
-                ],
-              ),
-            )
-          ],
-          automaticallyImplyLeading: false,
-        ),
-        body: SafeArea(
-          child: Material(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: <Widget>[
-                  totalPatientsCard(35),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                    child: Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: treatmentInfoCards(TREATMENTS_ONGOING, 7),
-                        ),
-                        Expanded(
-                          child: treatmentInfoCards(TREATMENTS_COMPLETED, 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AddPatientPage()),
-                      );
-                    },
-                    child: addNewPatient(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

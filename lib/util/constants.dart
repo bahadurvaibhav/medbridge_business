@@ -6,6 +6,7 @@ const String ADD_NEW_PATIENT = 'Add New Patient';
 const String API_KEY = 'QXmjfzsnC7wzhYsDGUuBnTXMrwTh2xZv';
 
 const String BASE_URL = 'http://connectinghealthcare.in/api/business/';
+const String LOGIN_URL = BASE_URL + 'login.php';
 const String UPLOAD_DOCUMENT_URL = BASE_URL + 'uploadDocument.php';
 const String GET_HOSPITALS_URL = BASE_URL + 'getHospitals.php';
 const String ADD_PATIENT_URL = BASE_URL + 'addPatient.php';
