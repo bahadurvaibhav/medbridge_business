@@ -45,7 +45,10 @@ class _PatientsPageState extends State<PatientsPage> {
                       width: double.infinity,
                       child: Stack(
                         children: <Widget>[
-                          loadingList(),
+                          Container(
+                            padding: EdgeInsets.only(top: 30),
+                            child: loadingList(),
+                          ),
                           Container(
                             alignment: Alignment(1.0, -1.0),
                             padding: EdgeInsets.only(top: 10, right: 20),
@@ -101,10 +104,9 @@ class _PatientsPageState extends State<PatientsPage> {
         child: ListView.builder(
           itemCount: patients.length,
           itemBuilder: (BuildContext context, int index) {
-            return /*PatientCard(
+            return PatientCard(
               patientFromApi: patients[index],
-            );*/
-                Text(patients[index].patientName);
+            );
           },
         ),
       );
@@ -124,12 +126,13 @@ class _PatientsPageState extends State<PatientsPage> {
     };
     final response = await post(GET_PATIENTS_URL, body);
     print(response.body);
-    List<PatientResponse> sentOffers = patientResponseFromJson(response.body);
-    sentOffers.sort((a, b) {
+    List<PatientResponse> patientsFromApi =
+        patientResponseFromJson(response.body);
+    patientsFromApi.sort((a, b) {
       return b.created.compareTo(a.created);
     });
     setState(() {
-      patients = sentOffers;
+      patients = patientsFromApi;
       apiCallDone = true;
     });
   }
@@ -163,7 +166,7 @@ class _PatientsPageState extends State<PatientsPage> {
   }
 
   addNewPatient() async {
-    print("createOffer() clicked");
+    print("addNewPatient() clicked");
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => AddPatientPage()),
