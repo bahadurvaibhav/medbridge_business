@@ -8,6 +8,7 @@ const String API_KEY = 'QXmjfzsnC7wzhYsDGUuBnTXMrwTh2xZv';
 const String BASE_URL = 'http://connectinghealthcare.in/api/business/';
 const String UPLOAD_DOCUMENT_URL = BASE_URL + 'uploadDocument.php';
 const String GET_HOSPITALS_URL = BASE_URL + 'getHospitals.php';
+const String ADD_PATIENT_URL = BASE_URL + 'addPatient.php';
 
 const int DOCUMENT_MAX_SIZE = 10;
 const List<String> ALLOWED_DOCUMENT_EXTENSIONS = [

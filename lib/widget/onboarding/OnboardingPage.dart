@@ -113,7 +113,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       prefs.setBool(IS_LOGGED_IN, true);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => new HomePage()),
       );
     } else if (loginResponse.response.status == 203) {
       print("Register API failure");

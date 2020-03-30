@@ -9,15 +9,24 @@ String validateNumber(String name) {
   if (name.isEmpty) {
     return "Enter value";
   }
-  if (isNumeric(name)) {
-    return "Enter value";
+  if (!isNumeric(name)) {
+    return "Only numbers allowed";
   }
   return null;
 }
 
 bool isNumeric(String s) {
-  if (s == null) {
-    return false;
+  RegExp regExp = RegExp('[0-9]');
+  return regExp.hasMatch(s);
+}
+
+String validateEmail(String email) {
+  if (email.length == 0) {
+    return "Enter email";
   }
-  return double.parse(s, (e) => null) != null;
+  RegExp specialCharacters = new RegExp(r'(?=.*?[@])');
+  if (!specialCharacters.hasMatch(email)) {
+    return "Email should have @";
+  }
+  return null;
 }

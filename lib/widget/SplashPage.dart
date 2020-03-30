@@ -21,7 +21,7 @@ class SplashPage extends StatelessWidget {
         Navigator.pop(context);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => AddPatientPage()),
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
         // FIXME: Change to HomePage
       }

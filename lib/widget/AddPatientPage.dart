@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:country_pickers/country.dart';
@@ -6,7 +7,9 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:medbridge_business/gateway/DocumentMetadata.dart';
 import 'package:medbridge_business/gateway/HospitalResponse.dart';
+import 'package:medbridge_business/gateway/Response.dart';
 import 'package:medbridge_business/gateway/ResponseWithId.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
@@ -49,9 +52,12 @@ class _AddPatientPageState extends State<AddPatientPage> {
   TextEditingController patientAccommodationAssistController =
       new TextEditingController();
   FocusNode patientAccommodationAssistFocus = FocusNode();
+  String preferredHospitalId = "";
   TextEditingController hospitalTypeAheadController =
       new TextEditingController();
   FocusNode hospitalTypeAheadFocus = FocusNode();
+  final _patientDetailsFormKey = GlobalKey<FormState>();
+  final _patientPreferencesFormKey = GlobalKey<FormState>();
 
   String patientPhoneCode = "+91";
   String patientCountry = "India";
@@ -110,7 +116,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
                 children: <Widget>[
                   patientDetails(),
                   divider(),
-                  patientProblemDetails(),
+                  patientPreferencesDetails(),
                   divider(),
                   reports(),
                   divider(),
@@ -124,7 +130,55 @@ class _AddPatientPageState extends State<AddPatientPage> {
     );
   }
 
-  submitClicked() {}
+  submitClicked() async {
+    bool patientDetailsValid = _patientDetailsFormKey.currentState.validate();
+    bool patientPreferencesValid =
+        _patientPreferencesFormKey.currentState.validate();
+    if (!patientDetailsValid || !patientPreferencesValid) {
+      print('Form invalid with patient details: ' +
+          patientDetailsValid.toString() +
+          ' and preferences: ' +
+          patientPreferencesValid.toString());
+      return;
+    }
+    String patientName = patientNameController.text;
+    String patientPhone = patientPhoneCode + patientPhoneController.text;
+    String patientEmail = patientEmailController.text;
+    String patientProblem = patientProblemController.text;
+    String patientPreferredDestination =
+        patientPreferredDestinationController.text;
+    String patientTravelAssist = patientTravelAssistController.text;
+    String patientAccommodationAssist =
+        patientAccommodationAssistController.text;
+    final prefs = await SharedPreferences.getInstance();
+    var userId = prefs.getInt(USER_ID).toString();
+    // uploadedDocuments, userId, patientCountry, preferredHospitalId
+    String uploadedDocumentsString = documentMetadataToJson(uploadedDocuments);
+    print('Uploaded Documents: ' + uploadedDocumentsString);
+    var body = {
+      "userId": userId.toString(),
+      "patientName": patientName,
+      "patientPhone": patientPhone,
+      "patientEmail": patientEmail,
+      "patientCountry": patientCountry,
+      "patientProblem": patientProblem,
+      "patientPreferredDestination": patientPreferredDestination,
+      "patientTravelAssist": patientTravelAssist,
+      "patientAccommodationAssist": patientAccommodationAssist,
+      "preferredHospitalId": preferredHospitalId,
+      "uploadedDocuments": uploadedDocumentsString,
+      "apiKey": API_KEY,
+    };
+    print(body.toString());
+    final response = await post(ADD_PATIENT_URL, body);
+    StatusMsg statusMsg = responseFromJson(response.body);
+    if (statusMsg.status == 200) {
+      print("Add Patient API successful");
+      Navigator.pop(context);
+    } else {
+      print("Add Patient API failed");
+    }
+  }
 
   Widget submitButton() {
     return Row(
@@ -150,74 +204,77 @@ class _AddPatientPageState extends State<AddPatientPage> {
     );
   }
 
-  Widget patientProblemDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'PREFERENCES:',
-          style: addPatientHeadingStyle(),
-        ),
-        TextFormField(
-          controller: patientProblemController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientProblemFocus,
-          onFieldSubmitted: (term) {
-            patientProblemFocus.unfocus();
-            FocusScope.of(context)
-                .requestFocus(patientPreferredDestinationFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Describe problem',
+  Widget patientPreferencesDetails() {
+    return Form(
+      key: _patientPreferencesFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'PREFERENCES:',
+            style: addPatientHeadingStyle(),
           ),
-        ),
-        TextFormField(
-          controller: patientPreferredDestinationController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientPreferredDestinationFocus,
-          onFieldSubmitted: (term) {
-            patientPreferredDestinationFocus.unfocus();
-            FocusScope.of(context).requestFocus(hospitalTypeAheadFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Preferred destination(s) for treatment',
+          TextFormField(
+            controller: patientProblemController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientProblemFocus,
+            onFieldSubmitted: (term) {
+              patientProblemFocus.unfocus();
+              FocusScope.of(context)
+                  .requestFocus(patientPreferredDestinationFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            validator: validateName,
+            decoration: InputDecoration(
+              hintText: 'Describe problem*',
+            ),
           ),
-        ),
-        selectHospitals(),
-        TextFormField(
-          controller: patientTravelAssistController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientTravelAssistFocus,
-          onFieldSubmitted: (term) {
-            patientTravelAssistFocus.unfocus();
-            FocusScope.of(context)
-                .requestFocus(patientAccommodationAssistFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Patient needs travel assistance',
+          TextFormField(
+            controller: patientPreferredDestinationController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientPreferredDestinationFocus,
+            onFieldSubmitted: (term) {
+              patientPreferredDestinationFocus.unfocus();
+              FocusScope.of(context).requestFocus(hospitalTypeAheadFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            /*validator: validateName,*/
+            decoration: InputDecoration(
+              hintText: 'Preferred destination(s) for treatment',
+            ),
           ),
-        ),
-        TextFormField(
-          controller: patientAccommodationAssistController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientAccommodationAssistFocus,
-          onFieldSubmitted: (term) {
-            patientAccommodationAssistFocus.unfocus();
-            FocusScope.of(context).requestFocus(fileDescriptionFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Patient needs accomodation assistance',
+          selectHospitals(),
+          TextFormField(
+            controller: patientTravelAssistController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientTravelAssistFocus,
+            onFieldSubmitted: (term) {
+              patientTravelAssistFocus.unfocus();
+              FocusScope.of(context)
+                  .requestFocus(patientAccommodationAssistFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            /*validator: validateName,*/
+            decoration: InputDecoration(
+              hintText: 'Patient needs travel assistance',
+            ),
           ),
-        ),
-      ],
+          TextFormField(
+            controller: patientAccommodationAssistController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientAccommodationAssistFocus,
+            onFieldSubmitted: (term) {
+              patientAccommodationAssistFocus.unfocus();
+              FocusScope.of(context).requestFocus(fileDescriptionFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            /*validator: validateName,*/
+            decoration: InputDecoration(
+              hintText: 'Patient needs accomodation assistance',
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -251,91 +308,95 @@ class _AddPatientPageState extends State<AddPatientPage> {
       },
       onSuggestionSelected: (suggestion) {
         hospitalTypeAheadController.text = suggestion.hospitalName;
+        preferredHospitalId = suggestion.id;
       },
       /*onSaved: (value) => this._selectedCity = value,*/
     );
   }
 
   Widget patientDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Patient Details',
-          style: addPatientTitleStyle(),
-        ),
-        TextFormField(
-          controller: patientNameController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientNameFocus,
-          onFieldSubmitted: (term) {
-            patientNameFocus.unfocus();
-            FocusScope.of(context).requestFocus(patientPhoneFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Enter patient name',
+    return Form(
+      key: _patientDetailsFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Patient Details',
+            style: addPatientTitleStyle(),
           ),
-        ),
-        Row(
-          children: <Widget>[
-            CountryPickerDropdown(
-              initialValue: 'IN',
-              itemBuilder: _buildCountryPhoneCodeDropdownItem,
-              sortComparator: (Country a, Country b) =>
-                  a.phoneCode.compareTo(b.phoneCode),
-              onValuePicked: (Country country) {
-                patientPhoneCode = country.phoneCode;
-              },
+          TextFormField(
+            controller: patientNameController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientNameFocus,
+            onFieldSubmitted: (term) {
+              patientNameFocus.unfocus();
+              FocusScope.of(context).requestFocus(patientPhoneFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            validator: validateName,
+            decoration: InputDecoration(
+              hintText: 'Enter patient name*',
             ),
-            SizedBox(width: 10),
-            Expanded(
-              child: TextFormField(
-                controller: patientPhoneController,
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.number,
-                focusNode: patientPhoneFocus,
-                onFieldSubmitted: (term) {
-                  patientPhoneFocus.unfocus();
-                  FocusScope.of(context).requestFocus(patientEmailFocus);
+          ),
+          Row(
+            children: <Widget>[
+              CountryPickerDropdown(
+                initialValue: 'IN',
+                itemBuilder: _buildCountryPhoneCodeDropdownItem,
+                sortComparator: (Country a, Country b) =>
+                    a.phoneCode.compareTo(b.phoneCode),
+                onValuePicked: (Country country) {
+                  patientPhoneCode = '+' + country.phoneCode;
                 },
-                style: TextStyle(color: Colors.blue),
-                validator: validateNumber,
-                decoration: InputDecoration(
-                  hintText: 'Enter patient phone number',
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: patientPhoneController,
+                  textInputAction: TextInputAction.next,
+                  keyboardType: TextInputType.number,
+                  focusNode: patientPhoneFocus,
+                  onFieldSubmitted: (term) {
+                    patientPhoneFocus.unfocus();
+                    FocusScope.of(context).requestFocus(patientEmailFocus);
+                  },
+                  style: TextStyle(color: Colors.blue),
+                  validator: validateNumber,
+                  decoration: InputDecoration(
+                    hintText: 'Enter patient phone number*',
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        TextFormField(
-          controller: patientEmailController,
-          textInputAction: TextInputAction.next,
-          focusNode: patientEmailFocus,
-          onFieldSubmitted: (term) {
-            patientEmailFocus.unfocus();
-            FocusScope.of(context).requestFocus(patientProblemFocus);
-          },
-          style: TextStyle(color: Colors.blue),
-          validator: validateName,
-          decoration: InputDecoration(
-            hintText: 'Enter patient email',
+            ],
           ),
-        ),
-        SizedBox(
-          height: 20,
-        ),
-        CountryPickerDropdown(
-          initialValue: 'IN',
-          itemBuilder: _buildCountryDropdownItem,
-          sortComparator: (Country a, Country b) =>
-              a.isoCode.compareTo(b.isoCode),
-          onValuePicked: (Country country) {
-            patientCountry = country.name;
-          },
-        ),
-      ],
+          TextFormField(
+            controller: patientEmailController,
+            textInputAction: TextInputAction.next,
+            focusNode: patientEmailFocus,
+            onFieldSubmitted: (term) {
+              patientEmailFocus.unfocus();
+              FocusScope.of(context).requestFocus(patientProblemFocus);
+            },
+            style: TextStyle(color: Colors.blue),
+            validator: validateEmail,
+            decoration: InputDecoration(
+              hintText: 'Enter patient email*',
+            ),
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          CountryPickerDropdown(
+            initialValue: 'IN',
+            itemBuilder: _buildCountryDropdownItem,
+            sortComparator: (Country a, Country b) =>
+                a.isoCode.compareTo(b.isoCode),
+            onValuePicked: (Country country) {
+              patientCountry = country.name;
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -559,12 +620,4 @@ class _AddPatientPageState extends State<AddPatientPage> {
       ),
     );
   }
-}
-
-class DocumentMetadata {
-  int documentId;
-  String description;
-  String fileName;
-
-  DocumentMetadata(this.documentId, this.description, this.fileName);
 }
