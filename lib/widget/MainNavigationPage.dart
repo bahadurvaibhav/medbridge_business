@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
 import 'package:medbridge_business/widget/PatientsPage.dart';
@@ -86,6 +88,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     );
   }
 
+  GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: [
+      'email',
+    ],
+  );
+
+  final facebookLogin = FacebookLogin();
+
   Future<void> showLogoutDialog() {
     return showDialog(
       context: context,
@@ -99,6 +109,8 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           ),
           FlatButton(
             onPressed: () async {
+              _googleSignIn.signOut();
+              facebookLogin.logOut();
               SharedPreferences preferences =
                   await SharedPreferences.getInstance();
               preferences.clear();
