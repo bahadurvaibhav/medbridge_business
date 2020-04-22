@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medbridge_business/gateway/PatientResponse.dart';
+import 'package:medbridge_business/util/StatusConstants.dart';
 
 class PatientCard extends StatefulWidget {
   final PatientResponse patientFromApi;
@@ -28,7 +29,8 @@ class _PatientCardState extends State<PatientCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'STATUS: PATIENT SUBMITTED',
+                  'STATUS: ' +
+                      statusReadable.reverse[widget.patientFromApi.status],
                   style: TextStyle(letterSpacing: 0.7),
                 ),
                 SizedBox(height: 10),

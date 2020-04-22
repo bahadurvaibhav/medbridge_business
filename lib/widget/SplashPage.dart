@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:medbridge_business/util/preferences.dart';
-import 'package:medbridge_business/widget/AddPatientPage.dart';
+import 'package:medbridge_business/widget/patient/PatientPage.dart';
 import 'package:medbridge_business/widget/MainNavigationPage.dart';
 import 'package:medbridge_business/widget/onboarding/OnboardingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';

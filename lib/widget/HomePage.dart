@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/StatisticsResponse.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
+import 'package:medbridge_business/util/StatusConstants.dart';
 import 'package:medbridge_business/util/constants.dart';
 import 'package:medbridge_business/util/preferences.dart';
-import 'package:medbridge_business/widget/AddPatientPage.dart';
+import 'package:medbridge_business/widget/patient/PatientPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
@@ -50,7 +52,9 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AddPatientPage()),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          PatientPage(status: Status.NEW_PATIENT)),
                 );
               },
               child: addNewPatient(),

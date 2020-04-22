@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/PatientResponse.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
+import 'package:medbridge_business/util/StatusConstants.dart';
 import 'package:medbridge_business/util/constants.dart';
 import 'package:medbridge_business/util/preferences.dart';
-import 'package:medbridge_business/widget/AddPatientPage.dart';
+import 'package:medbridge_business/widget/patient/PatientPage.dart';
 import 'package:medbridge_business/widget/PatientCard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -104,8 +106,11 @@ class _PatientsPageState extends State<PatientsPage> {
         child: ListView.builder(
           itemCount: patients.length,
           itemBuilder: (BuildContext context, int index) {
-            return PatientCard(
-              patientFromApi: patients[index],
+            return GestureDetector(
+              onTap: () => viewPatient(patients[index]),
+              child: PatientCard(
+                patientFromApi: patients[index],
+              ),
             );
           },
         ),
@@ -120,6 +125,7 @@ class _PatientsPageState extends State<PatientsPage> {
     print("getPatients API called");
     final prefs = await SharedPreferences.getInstance();
     int addedBy = prefs.getInt(USER_ID);
+    print("addedBy: " + addedBy.toString());
     var body = {
       "apiKey": API_KEY,
       "userId": addedBy.toString(),
@@ -169,7 +175,22 @@ class _PatientsPageState extends State<PatientsPage> {
     print("addNewPatient() clicked");
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddPatientPage()),
+      MaterialPageRoute(
+          builder: (context) => PatientPage(status: Status.NEW_PATIENT)),
+    );
+    getPatients();
+  }
+
+  viewPatient(PatientResponse patientResponse) async {
+    print("viewPatient()");
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientPage(
+          patient: patientResponse,
+          status: patientResponse.status,
+        ),
+      ),
     );
     getPatients();
   }
