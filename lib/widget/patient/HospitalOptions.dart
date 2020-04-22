@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:medbridge_business/domain/HospitalOption.dart';
 import 'package:medbridge_business/gateway/IdNameResponse.dart';
@@ -53,8 +54,13 @@ class HospitalOptionsState extends State<HospitalOptions> {
   FocusNode notesFocus = FocusNode();
   String preferredHospitalId = "";
 
+  int currentIndex;
+  final SwiperController swiperController = SwiperController();
+  String preferredHospitalOptionId = "-1";
+
   @override
   void initState() {
+    currentIndex = 0;
     hospitalOptions = widget.hospitalOptions;
     super.initState();
   }
@@ -197,7 +203,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
             SizedBox(
               height: 20,
             ),
-            getListView(),
+            getSwiper(),
           ],
         ),
       );
@@ -209,10 +215,29 @@ class HospitalOptionsState extends State<HospitalOptions> {
           SizedBox(
             height: 15,
           ),
-          getListView(),
+          getSwiper(),
         ],
       );
     }
+  }
+
+  int _radioValue = -1;
+
+  Widget getSelectButton(index) {
+    return Row(
+      children: <Widget>[
+        Radio(
+          value: index,
+          groupValue: _radioValue,
+          onChanged: (value) {
+            setState(() {
+              _radioValue = value;
+            });
+          },
+        ),
+        Text('Select option for treatment'),
+      ],
+    );
   }
 
   Widget getDeleteButton(index) {
@@ -225,57 +250,93 @@ class HospitalOptionsState extends State<HospitalOptions> {
     );
   }
 
+  Widget getSwiper() {
+    var screenWidth = MediaQuery.of(context).size.width;
+    return ConstrainedBox(
+      constraints: new BoxConstraints.loose(new Size(screenWidth, 480.0)),
+      child: Swiper(
+        controller: swiperController,
+        itemCount: hospitalOptions.length,
+        autoplay: false,
+        index: currentIndex,
+        onIndexChanged: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
+        itemBuilder: (context, index) => showHospitalOptionCard(index),
+        pagination: SwiperPagination(
+          builder: DotSwiperPaginationBuilder(
+              activeColor: primary,
+              color: primary,
+              size: 5.0,
+              activeSize: 12.0),
+        ),
+        itemHeight: 300,
+        loop: false,
+        autoplayDisableOnInteraction: true,
+      ),
+    );
+  }
+
   Widget getListView() {
     return ListView.builder(
       shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: hospitalOptions.length,
       itemBuilder: (BuildContext ctxt, int index) {
-        HospitalOption option = hospitalOptions[index];
-        Widget deleteButton = SizedBox();
-        if (widget.editable) {
-          deleteButton = Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              getDeleteButton(index),
-            ],
-          );
-        }
-        double spacingHeight = 10;
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  deleteButton,
-                  showTitleValue('Hospital Name', option.hospitalName),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue('Treatment Name', option.treatmentName),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue(
-                      'Duration of Hospital Stay', option.hospitalStayDuration),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue(
-                      'Duration of complete Stay', option.completeStayDuration),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue('Cost', option.cost),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue(
-                      'Travel Assistance Comments', option.travelAssistNotes),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue('Accommodation Assistance Comments',
-                      option.accommodationAssistNotes),
-                  SizedBox(height: spacingHeight),
-                  showTitleValue('Notes', option.notes),
-                  SizedBox(height: spacingHeight),
-                ],
-              ),
-            ),
-          ),
-        );
+        return showHospitalOptionCard(index);
       },
+    );
+  }
+
+  Widget showHospitalOptionCard(int index) {
+    HospitalOption option = hospitalOptions[index];
+    Widget actionButton = SizedBox();
+    if (widget.editable) {
+      actionButton = Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          getDeleteButton(index),
+        ],
+      );
+    } else {
+      actionButton = getSelectButton(index);
+    }
+    double spacingHeight = 10;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              actionButton,
+              showTitleValue('Hospital Name', option.hospitalName),
+              SizedBox(height: spacingHeight),
+              showTitleValue('Treatment Name', option.treatmentName),
+              SizedBox(height: spacingHeight),
+              showTitleValue(
+                  'Duration of Hospital Stay', option.hospitalStayDuration),
+              SizedBox(height: spacingHeight),
+              showTitleValue(
+                  'Duration of complete Stay', option.completeStayDuration),
+              SizedBox(height: spacingHeight),
+              showTitleValue('Cost', option.cost),
+              SizedBox(height: spacingHeight),
+              showTitleValue(
+                  'Travel Assistance Comments', option.travelAssistNotes),
+              SizedBox(height: spacingHeight),
+              showTitleValue('Accommodation Assistance Comments',
+                  option.accommodationAssistNotes),
+              SizedBox(height: spacingHeight),
+              showTitleValue('Notes', option.notes),
+              SizedBox(height: spacingHeight),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

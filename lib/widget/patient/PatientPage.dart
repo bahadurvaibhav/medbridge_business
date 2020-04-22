@@ -95,6 +95,7 @@ class _PatientPageState extends State<PatientPage> {
   bool uploadDocumentsFilled = false;
   bool fileUploadingInProgress = false;
   bool addPatientInProgress = false;
+  bool submitSelectedHospitalOptionId = false;
 
   ScrollController _scrollController = new ScrollController();
 
@@ -245,6 +246,31 @@ class _PatientPageState extends State<PatientPage> {
       );
     }
     return hospitalOptions;
+  }
+
+  submitSelectedHospitalOptionClicked() async {
+    print('submitSelectedHospitalOptionClicked()');
+    String optionId =
+        _hospitalOptionsKey.currentState.preferredHospitalOptionId;
+    if (optionId == "-1") {
+      print('Hospital options not selected');
+      _scaffoldKey.currentState
+          .showSnackBar(showSnackbarWith("Select 1 option"));
+      return;
+    }
+    setState(() {
+      submitSelectedHospitalOptionId = true;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    int addedBy = prefs.getInt(USER_ID);
+    var body = {
+      "hospitalOptions": hospitalOptionsToJson(options),
+      "patientId": widget.patient.id,
+      "addedBy": addedBy.toString(),
+      "apiKey": API_KEY,
+    };
+    print(body.toString());
+    final response = await post(SUBMIT_HOSPITAL_OPTIONS_URL, body);
   }
 
   submitClicked() async {
@@ -828,6 +854,7 @@ class _PatientPageState extends State<PatientPage> {
       if (uploadedDocuments.length > 0) {
         listView = ListView.builder(
           shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: uploadedDocuments.length,
           itemBuilder: (BuildContext ctxt, int index) {
             DocumentMetadata uploadedDocument = uploadedDocuments[index];
