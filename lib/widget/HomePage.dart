@@ -184,11 +184,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            /*Icon(
-              Icons.add_circle,
-              size: 45,
-              color: primary,
-            ),*/
           ],
         ),
       ),
