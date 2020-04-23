@@ -18,6 +18,8 @@ class _HomePageState extends State<HomePage> {
   String totalPatients = "...";
   String treatmentsOngoing = "...";
   String treatmentsCompleted = "...";
+  String rewardDue = "...";
+  String rewardCollected = "...";
 
   @override
   void initState() {
@@ -28,39 +30,60 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: <Widget>[
-            totalPatientsCard(totalPatients),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: treatmentInfoCards(
-                        TREATMENTS_ONGOING, treatmentsOngoing),
-                  ),
-                  Expanded(
-                    child: treatmentInfoCards(
-                        TREATMENTS_COMPLETED, treatmentsCompleted),
-                  ),
-                ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: <Widget>[
+              totalPatientsCard(totalPatients),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: Column(
+                  children: <Widget>[
+                    IntrinsicHeight(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: treatmentInfoCards(
+                                TREATMENTS_ONGOING, treatmentsOngoing),
+                          ),
+                          Expanded(
+                            child: treatmentInfoCards(
+                                TREATMENTS_COMPLETED, treatmentsCompleted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: treatmentInfoCards(REWARD_DUE, rewardDue),
+                          ),
+                          Expanded(
+                            child: treatmentInfoCards(
+                                REWARD_COLLECTED, rewardCollected),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            GestureDetector(
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          PatientPage(status: Status.NEW_PATIENT)),
-                );
-                getStats();
-              },
-              child: addNewPatient(),
-            ),
-          ],
+              GestureDetector(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            PatientPage(status: Status.NEW_PATIENT)),
+                  );
+                  getStats();
+                },
+                child: addNewPatient(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -81,6 +104,8 @@ class _HomePageState extends State<HomePage> {
       totalPatients = stats.totalPatients;
       treatmentsOngoing = stats.treatmentsOngoing;
       treatmentsCompleted = stats.treatmentsCompleted;
+      rewardDue = "\$" + stats.rewardDue;
+      rewardCollected = "\$" + stats.rewardCollected;
     });
   }
 
@@ -117,7 +142,7 @@ class _HomePageState extends State<HomePage> {
           children: <Widget>[
             Text(
               title,
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
             Text(
@@ -145,7 +170,7 @@ class _HomePageState extends State<HomePage> {
             Text(
               ADD_NEW_PATIENT,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -154,7 +179,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
                 child: Icon(
                   Icons.add,
-                  size: 45,
+                  size: 40,
                   color: primary,
                 ),
               ),
