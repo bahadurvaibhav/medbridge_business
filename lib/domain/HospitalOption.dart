@@ -9,6 +9,7 @@ List<HospitalOption> toHospitalOption(List<HospitalOptionResponse> data) {
   List<HospitalOption> options = new List();
   data.forEach((response) {
     options.add(new HospitalOption(
+      response.id,
       response.hospitalId,
       response.hospitalName,
       response.treatmentName,
@@ -24,6 +25,7 @@ List<HospitalOption> toHospitalOption(List<HospitalOptionResponse> data) {
 }
 
 class HospitalOption {
+  String id;
   String hospitalId;
   String hospitalName;
   String treatmentName;
@@ -35,6 +37,7 @@ class HospitalOption {
   String notes;
 
   HospitalOption(
+    this.id,
     this.hospitalId,
     this.hospitalName,
     this.treatmentName,
@@ -47,6 +50,7 @@ class HospitalOption {
   );
 
   Map<String, dynamic> toJson() => {
+        "id": id,
         "hospitalId": hospitalId,
         "hospitalName": hospitalName,
         "treatmentName": treatmentName,

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:medbridge_business/gateway/Response.dart';
+import 'package:medbridge_business/gateway/StatusMsg.dart';
 
 ResponseWithId responseWithIdFromJson(String str) =>
     ResponseWithId.fromJson(json.decode(str));

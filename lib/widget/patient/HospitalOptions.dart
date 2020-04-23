@@ -12,6 +12,7 @@ class HospitalOptions extends StatefulWidget {
   final List<IdNameResponse> hospitals;
   final List<IdNameResponse> treatments;
   final bool editable;
+  final bool selectable;
   final List<HospitalOption> hospitalOptions;
 
   HospitalOptions({
@@ -20,6 +21,7 @@ class HospitalOptions extends StatefulWidget {
     @required this.hospitals,
     @required this.treatments,
     @required this.editable,
+    @required this.selectable,
     @required this.hospitalOptions,
   }) : super(key: key);
 
@@ -56,11 +58,12 @@ class HospitalOptionsState extends State<HospitalOptions> {
 
   int currentIndex;
   final SwiperController swiperController = SwiperController();
-  String preferredHospitalOptionId = "-1";
+  bool optionSelected = false;
 
   @override
   void initState() {
     currentIndex = 0;
+    optionSelected = !widget.editable && !widget.selectable;
     hospitalOptions = widget.hospitalOptions;
     super.initState();
   }
@@ -80,8 +83,12 @@ class HospitalOptionsState extends State<HospitalOptions> {
 
   @override
   Widget build(BuildContext context) {
+    String heading = 'HOSPITAL OPTIONS:';
+    if (optionSelected) {
+      heading = 'SELECTED TREATMENT:';
+    }
     Widget title = Text(
-      'HOSPITAL OPTIONS:',
+      heading,
       style: addPatientHeadingStyle(),
     );
 
@@ -221,17 +228,17 @@ class HospitalOptionsState extends State<HospitalOptions> {
     }
   }
 
-  int _radioValue = -1;
+  String preferredHospitalOptionId = "-1";
 
-  Widget getSelectButton(index) {
+  Widget getSelectButton(HospitalOption option) {
     return Row(
       children: <Widget>[
         Radio(
-          value: index,
-          groupValue: _radioValue,
+          value: option.id,
+          groupValue: preferredHospitalOptionId,
           onChanged: (value) {
             setState(() {
-              _radioValue = value;
+              preferredHospitalOptionId = value;
             });
           },
         ),
@@ -252,8 +259,28 @@ class HospitalOptionsState extends State<HospitalOptions> {
 
   Widget getSwiper() {
     var screenWidth = MediaQuery.of(context).size.width;
+    double height = 480.0;
+    SwiperPagination pagination = SwiperPagination(
+      builder: DotSwiperPaginationBuilder(
+        activeColor: primary,
+        color: primary,
+        size: 5.0,
+        activeSize: 12.0,
+      ),
+    );
+    if (optionSelected) {
+      height = 420.0;
+      pagination = SwiperPagination(
+        builder: DotSwiperPaginationBuilder(
+          activeColor: primary,
+          color: primary,
+          size: 0.0,
+          activeSize: 0.0,
+        ),
+      );
+    }
     return ConstrainedBox(
-      constraints: new BoxConstraints.loose(new Size(screenWidth, 480.0)),
+      constraints: new BoxConstraints.loose(new Size(screenWidth, height)),
       child: Swiper(
         controller: swiperController,
         itemCount: hospitalOptions.length,
@@ -265,14 +292,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
           });
         },
         itemBuilder: (context, index) => showHospitalOptionCard(index),
-        pagination: SwiperPagination(
-          builder: DotSwiperPaginationBuilder(
-              activeColor: primary,
-              color: primary,
-              size: 5.0,
-              activeSize: 12.0),
-        ),
-        itemHeight: 300,
+        pagination: pagination,
         loop: false,
         autoplayDisableOnInteraction: true,
       ),
@@ -300,8 +320,8 @@ class HospitalOptionsState extends State<HospitalOptions> {
           getDeleteButton(index),
         ],
       );
-    } else {
-      actionButton = getSelectButton(index);
+    } else if (widget.selectable) {
+      actionButton = getSelectButton(option);
     }
     double spacingHeight = 10;
     return Padding(
@@ -341,6 +361,9 @@ class HospitalOptionsState extends State<HospitalOptions> {
   }
 
   showTitleValue(String title, String value) {
+    if (value == null) {
+      value = "";
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -374,6 +397,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
       print('Hospital Option Form valid');
       hospitalOptions.add(
         new HospitalOption(
+          "",
           preferredHospitalId,
           hospitalName,
           treatmentName,

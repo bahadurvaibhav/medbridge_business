@@ -12,8 +12,8 @@ import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/AutocompleteTextResponse.dart';
 import 'package:medbridge_business/gateway/IdNameResponse.dart';
 import 'package:medbridge_business/gateway/PatientResponse.dart';
-import 'package:medbridge_business/gateway/Response.dart';
 import 'package:medbridge_business/gateway/ResponseWithId.dart';
+import 'package:medbridge_business/gateway/StatusMsg.dart';
 import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
@@ -95,7 +95,7 @@ class _PatientPageState extends State<PatientPage> {
   bool uploadDocumentsFilled = false;
   bool fileUploadingInProgress = false;
   bool addPatientInProgress = false;
-  bool submitSelectedHospitalOptionId = false;
+  bool submitSelectHospitalOptionInProgress = false;
 
   ScrollController _scrollController = new ScrollController();
 
@@ -230,6 +230,7 @@ class _PatientPageState extends State<PatientPage> {
     Widget hospitalOptions = SizedBox();
     if (widget.status == Status.NEW_PATIENT) {
       hospitalOptions = SizedBox();
+    } else if (widget.status == Status.PATIENT_SUBMITTED) {
     } else if (widget.status == Status.HOSPITAL_OPTIONS) {
       hospitalOptions = Column(
         children: <Widget>[
@@ -239,6 +240,24 @@ class _PatientPageState extends State<PatientPage> {
             hospitals: hospitals,
             treatments: treatments,
             editable: false,
+            selectable: true,
+            hospitalOptions: toHospitalOption(widget.patient.hospitalOptions),
+          ),
+          divider(),
+          showSubmitButton(submitSelectHospitalOptionInProgress,
+              submitSelectHospitalOptionClicked),
+        ],
+      );
+    } else {
+      hospitalOptions = Column(
+        children: <Widget>[
+          HospitalOptions(
+            key: _hospitalOptionsKey,
+            patientId: widget.patient.id,
+            hospitals: hospitals,
+            treatments: treatments,
+            editable: false,
+            selectable: false,
             hospitalOptions: toHospitalOption(widget.patient.hospitalOptions),
           ),
           divider(),
@@ -248,7 +267,7 @@ class _PatientPageState extends State<PatientPage> {
     return hospitalOptions;
   }
 
-  submitSelectedHospitalOptionClicked() async {
+  submitSelectHospitalOptionClicked() async {
     print('submitSelectedHospitalOptionClicked()');
     String optionId =
         _hospitalOptionsKey.currentState.preferredHospitalOptionId;
@@ -259,18 +278,32 @@ class _PatientPageState extends State<PatientPage> {
       return;
     }
     setState(() {
-      submitSelectedHospitalOptionId = true;
+      submitSelectHospitalOptionInProgress = true;
     });
-    final prefs = await SharedPreferences.getInstance();
-    int addedBy = prefs.getInt(USER_ID);
     var body = {
-      "hospitalOptions": hospitalOptionsToJson(options),
+      "hospitalOptionId": optionId,
       "patientId": widget.patient.id,
-      "addedBy": addedBy.toString(),
       "apiKey": API_KEY,
     };
     print(body.toString());
-    final response = await post(SUBMIT_HOSPITAL_OPTIONS_URL, body);
+    final response = await post(SELECT_HOSPITAL_OPTION_URL, body);
+    StatusMsg statusMsg = responseFromJson(response.body);
+    if (statusMsg.status == 200) {
+      print('Select Hospital Option API success');
+      setState(() {
+        submitSelectHospitalOptionInProgress = true;
+      });
+      _scaffoldKey.currentState.showSnackBar(showSnackbarWithCheck(
+          "Hospital options has been selected successfully"));
+      Navigator.pop(context);
+    } else {
+      print('Select Hospital Option API failed with msg: ' + statusMsg.msg);
+      setState(() {
+        submitSelectHospitalOptionInProgress = true;
+      });
+      _scaffoldKey.currentState.showSnackBar(showSnackbarWith(
+          "Unable to select hospital options. Try again later."));
+    }
   }
 
   submitClicked() async {
