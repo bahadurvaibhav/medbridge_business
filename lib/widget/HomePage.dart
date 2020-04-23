@@ -49,13 +49,14 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) =>
                           PatientPage(status: Status.NEW_PATIENT)),
                 );
+                getStats();
               },
               child: addNewPatient(),
             ),

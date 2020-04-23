@@ -121,7 +121,10 @@ class _PatientPageState extends State<PatientPage> {
       getHospitalsCompleted = true;
     });
     if (widget.status == Status.PATIENT_SUBMITTED ||
-        widget.status == Status.HOSPITAL_OPTIONS) {
+        widget.status == Status.HOSPITAL_OPTIONS ||
+        widget.status == Status.TREATMENT_CONFIRMED ||
+        widget.status == Status.TREATMENT_ONGOING ||
+        widget.status == Status.TREATMENT_COMPLETED) {
       List<String> preferredHospitalId = patient.preferredHospitalId.split(',');
       hospitals.forEach((hospital) {
         if (preferredHospitalId.contains(hospital.id)) {
@@ -291,7 +294,7 @@ class _PatientPageState extends State<PatientPage> {
     if (statusMsg.status == 200) {
       print('Select Hospital Option API success');
       setState(() {
-        submitSelectHospitalOptionInProgress = true;
+        submitSelectHospitalOptionInProgress = false;
       });
       _scaffoldKey.currentState.showSnackBar(showSnackbarWithCheck(
           "Hospital options has been selected successfully"));
@@ -299,7 +302,7 @@ class _PatientPageState extends State<PatientPage> {
     } else {
       print('Select Hospital Option API failed with msg: ' + statusMsg.msg);
       setState(() {
-        submitSelectHospitalOptionInProgress = true;
+        submitSelectHospitalOptionInProgress = false;
       });
       _scaffoldKey.currentState.showSnackBar(showSnackbarWith(
           "Unable to select hospital options. Try again later."));
