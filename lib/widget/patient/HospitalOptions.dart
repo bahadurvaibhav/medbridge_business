@@ -78,6 +78,18 @@ class HospitalOptionsState extends State<HospitalOptions> {
     hospitalTypeAheadFocus.dispose();
     costController.dispose();
     costFocus.dispose();
+    treatmentTypeAheadController.dispose();
+    treatmentTypeAheadFocus.dispose();
+    hospitalStayDurationController.dispose();
+    hospitalStayDurationFocus.dispose();
+    completeStayDurationController.dispose();
+    completeStayDurationFocus.dispose();
+    travelAssistCommentsController.dispose();
+    travelAssistCommentsFocus.dispose();
+    accommodationAssistCommentsController.dispose();
+    accommodationAssistCommentsFocus.dispose();
+    notesController.dispose();
+    notesFocus.dispose();
     super.dispose();
   }
 
