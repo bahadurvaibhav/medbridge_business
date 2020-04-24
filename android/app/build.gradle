@@ -38,7 +38,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "in.medbridge.business"
         minSdkVersion 16
         targetSdkVersion 28
@@ -58,6 +57,10 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
+            // TODO: Added because crashed in Sandeep's phone
+            ndk {
+                abiFilters "armeabi-v7a"
+            }
         }
     }
 
@@ -72,3 +75,6 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 }
+
+apply plugin: 'io.fabric'
+apply plugin: 'com.google.gms.google-services'
