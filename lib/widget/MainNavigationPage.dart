@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/widget/HomePage.dart';
 import 'package:medbridge_business/widget/PatientsPage.dart';
+import 'package:medbridge_business/widget/ProfilePage.dart';
 import 'package:medbridge_business/widget/onboarding/OnboardingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,8 +16,8 @@ class MainNavigationPage extends StatefulWidget {
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
-  int _selectedIndex = 0;
-  PageController pageController = PageController(initialPage: 0);
+  static int _selectedIndex = 2;
+  PageController pageController = PageController(initialPage: _selectedIndex);
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +36,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             children: <Widget>[
               HomePage(),
               PatientsPage(),
+              Profile(),
             ],
           ),
         ),
@@ -53,6 +55,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         BottomNavigationBarItem(
           icon: Icon(Icons.people),
           title: Text('PATIENTS'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_pin),
+          title: Text('PROFILE'),
         ),
       ],
       currentIndex: _selectedIndex,

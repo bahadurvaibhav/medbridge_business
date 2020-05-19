@@ -105,50 +105,6 @@ class _PatientPageState extends State<PatientPage> {
     super.initState();
   }
 
-  getAutocompleteText(PatientResponse patient) async {
-    print('getAutocompleteText API called');
-    var body = {
-      "apiKey": API_KEY,
-    };
-    final response = await post(GET_AUTOCOMPLETE_TEXT_URL, body);
-    print(response.body);
-    AutocompleteTextResponse res =
-        autocompleteTextResponseFromJson(response.body);
-    hospitals = res.hospitals;
-    destinations = res.destinations;
-    treatments = res.treatments;
-    setState(() {
-      getHospitalsCompleted = true;
-    });
-    if (widget.status == Status.PATIENT_SUBMITTED ||
-        widget.status == Status.HOSPITAL_OPTIONS ||
-        widget.status == Status.TREATMENT_CONFIRMED ||
-        widget.status == Status.TREATMENT_ONGOING ||
-        widget.status == Status.TREATMENT_COMPLETED) {
-      List<String> preferredHospitalId = patient.preferredHospitalId.split(',');
-      hospitals.forEach((hospital) {
-        if (preferredHospitalId.contains(hospital.id)) {
-          if (selectPreferredHospitalName.isEmpty) {
-            selectPreferredHospitalName = hospital.name;
-          } else {
-            selectPreferredHospitalName += ", " + hospital.name;
-          }
-        }
-      });
-      patient.documents.forEach((doc) {
-        uploadedDocuments.add(new DocumentMetadata(
-          int.parse(doc.id),
-          doc.documentDescription,
-          doc.documentName,
-          doc.storedDocumentName,
-        ));
-      });
-      setState(() {
-        uploadDocumentsFilled = true;
-      });
-    }
-  }
-
   @override
   void dispose() {
     fileDescriptionController.dispose();
@@ -227,6 +183,50 @@ class _PatientPageState extends State<PatientPage> {
         ),
       ),
     );
+  }
+
+  getAutocompleteText(PatientResponse patient) async {
+    print('getAutocompleteText API called');
+    var body = {
+      "apiKey": API_KEY,
+    };
+    final response = await post(GET_AUTOCOMPLETE_TEXT_URL, body);
+    print(response.body);
+    AutocompleteTextResponse res =
+        autocompleteTextResponseFromJson(response.body);
+    hospitals = res.hospitals;
+    destinations = res.destinations;
+    treatments = res.treatments;
+    setState(() {
+      getHospitalsCompleted = true;
+    });
+    if (widget.status == Status.PATIENT_SUBMITTED ||
+        widget.status == Status.HOSPITAL_OPTIONS ||
+        widget.status == Status.TREATMENT_CONFIRMED ||
+        widget.status == Status.TREATMENT_ONGOING ||
+        widget.status == Status.TREATMENT_COMPLETED) {
+      List<String> preferredHospitalId = patient.preferredHospitalId.split(',');
+      hospitals.forEach((hospital) {
+        if (preferredHospitalId.contains(hospital.id)) {
+          if (selectPreferredHospitalName.isEmpty) {
+            selectPreferredHospitalName = hospital.name;
+          } else {
+            selectPreferredHospitalName += ", " + hospital.name;
+          }
+        }
+      });
+      patient.documents.forEach((doc) {
+        uploadedDocuments.add(new DocumentMetadata(
+          int.parse(doc.id),
+          doc.documentDescription,
+          doc.documentName,
+          doc.storedDocumentName,
+        ));
+      });
+      setState(() {
+        uploadDocumentsFilled = true;
+      });
+    }
   }
 
   showHospitalOptions() {

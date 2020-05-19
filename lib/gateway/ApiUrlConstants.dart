@@ -13,3 +13,4 @@ const String GET_STATISTICS_URL = BUSINESS_BASE_URL + 'getStats.php';
 const String GET_PATIENTS_URL = BUSINESS_BASE_URL + 'getPatients.php';
 const String SELECT_HOSPITAL_OPTION_URL =
     BUSINESS_BASE_URL + 'selectHospitalOption.php';
+const String GET_PROFILE_URL = BUSINESS_BASE_URL + 'getProfile.php';
