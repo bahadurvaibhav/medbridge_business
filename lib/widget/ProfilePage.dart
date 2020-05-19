@@ -84,6 +84,7 @@ class _ProfileState extends State<Profile> {
           Form(
             key: _profileFormKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 TextFormField(
                   controller: nameController,
@@ -154,8 +155,30 @@ class _ProfileState extends State<Profile> {
                     hintText: 'Country',
                   ),
                 ),
-                SizedBox(height: 10),
-                showRewardPercentage(rewardPercentageController.text),
+                SizedBox(height: 20),
+                showRewardPercentage(),
+                SizedBox(height: 20),
+                RaisedButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  color: primary,
+                  child: Container(
+                    height: 50,
+                    child: Center(
+                      child: Text(
+                        'Update Profile',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.normal,
+                          fontSize: 24,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  onPressed: updateProfileClicked,
+                ),
               ],
             ),
           ),
@@ -163,6 +186,8 @@ class _ProfileState extends State<Profile> {
       ),
     );
   }
+
+  updateProfileClicked() {}
 
   getProfile() async {
     print("getProfile API called");
@@ -189,18 +214,20 @@ class _ProfileState extends State<Profile> {
     }
   }
 
-  Widget showRewardPercentage(String rewardPercentage) {
+  Widget showRewardPercentage() {
     Widget widget = new SizedBox();
-    if (rewardPercentage.isNotEmpty) {
-      widget = TextFormField(
-        enabled: false,
-        controller: rewardPercentageController,
-        focusNode: rewardPercentageFocus,
-        style: TextStyle(color: Colors.blue),
-        validator: validateEmail,
-        decoration: InputDecoration(
-          hintText: 'Reward Percentage',
-        ),
+    if (rewardPercentageController.text.isNotEmpty) {
+      widget = Row(
+        children: <Widget>[
+          Text(
+            'Reward Percentage: ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(rewardPercentageController.text),
+          Text('% (for each treatment completed)'),
+        ],
       );
     }
     return widget;
