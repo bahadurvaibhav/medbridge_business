@@ -11,7 +11,6 @@ class ImageViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // add appbar inside scaffold
     return Scaffold(
       appBar: AppBar(
         title: Text(fileName),
