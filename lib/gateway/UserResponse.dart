@@ -36,6 +36,7 @@ class User {
   dynamic gender;
   dynamic address;
   dynamic country;
+  dynamic countryPhoneCode;
   dynamic rewardPercentage;
 
   User({
@@ -47,6 +48,7 @@ class User {
     this.gender,
     this.address,
     this.country,
+    this.countryPhoneCode,
     this.rewardPercentage,
   });
 
@@ -59,6 +61,7 @@ class User {
         gender: json["gender"],
         address: json["address"],
         country: json["country"],
+        countryPhoneCode: json["countryPhoneCode"],
         rewardPercentage: json["rewardPercentage"],
       );
 
@@ -71,6 +74,7 @@ class User {
         "gender": gender,
         "address": address,
         "country": country,
+        "countryPhoneCode": countryPhoneCode,
         "rewardPercentage": rewardPercentage,
       };
 }

@@ -1,6 +1,11 @@
+import 'package:country_pickers/countries.dart';
+import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_pickers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
+import 'package:medbridge_business/gateway/StatusMsg.dart';
 import 'package:medbridge_business/gateway/UserResponse.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
@@ -30,6 +35,9 @@ class _ProfileState extends State<Profile> {
   FocusNode rewardPercentageFocus = FocusNode();
   User user;
   bool getProfileApiCalled = false;
+  String countryInitialValue = 'IN';
+  String selectedCountry = "";
+  String selectedPhoneCode = "";
 
   @override
   void initState() {
@@ -116,6 +124,62 @@ class _ProfileState extends State<Profile> {
                   ),
                 ),
                 SizedBox(height: 10),
+                TypeAheadFormField(
+                  textFieldConfiguration: TextFieldConfiguration(
+                    controller: countryController,
+                    textInputAction: TextInputAction.next,
+                    focusNode: countryFocus,
+                    style: TextStyle(color: Colors.blue),
+                    decoration: InputDecoration(hintText: 'Country'),
+                    onSubmitted: (term) {
+                      countryFocus.unfocus();
+                      FocusScope.of(context).requestFocus(mobileFocus);
+                    },
+                  ),
+                  suggestionsCallback: (pattern) {
+                    List<Country> filteredCountries = new List();
+                    countryList.forEach((country) {
+                      if (country.name
+                          .toLowerCase()
+                          .contains(pattern.toLowerCase())) {
+                        filteredCountries.add(country);
+                      }
+                    });
+                    return filteredCountries;
+                  },
+                  itemBuilder: (context, Country suggestion) {
+                    return ListTile(
+                      title: Row(
+                        children: <Widget>[
+                          CountryPickerUtils.getDefaultFlagImage(suggestion),
+                          SizedBox(
+                            width: 8.0,
+                          ),
+                          Text(suggestion.name),
+                          Text(" ( +" + suggestion.phoneCode + " )"),
+                        ],
+                      ),
+                    );
+                  },
+                  transitionBuilder: (context, suggestionsBox, controller) {
+                    return suggestionsBox;
+                  },
+                  onSuggestionSelected: (Country suggestion) {
+                    selectedCountry = suggestion.name;
+                    selectedPhoneCode = suggestion.phoneCode;
+                    countryController.text =
+                        selectedCountry + " ( +" + selectedPhoneCode + " )";
+                  },
+                ),
+                /*TextFormField(
+                  controller: countryController,
+                  focusNode: countryFocus,
+                  style: TextStyle(color: Colors.blue),
+                  decoration: InputDecoration(
+                    hintText: 'Country',
+                  ),
+                ),*/
+                SizedBox(height: 10),
                 TextFormField(
                   controller: mobileController,
                   textInputAction: TextInputAction.next,
@@ -125,7 +189,6 @@ class _ProfileState extends State<Profile> {
                     FocusScope.of(context).requestFocus(addressFocus);
                   },
                   style: TextStyle(color: Colors.blue),
-                  validator: validateEmail,
                   decoration: InputDecoration(
                     hintText: 'Mobile',
                   ),
@@ -140,19 +203,8 @@ class _ProfileState extends State<Profile> {
                     FocusScope.of(context).requestFocus(countryFocus);
                   },
                   style: TextStyle(color: Colors.blue),
-                  validator: validateEmail,
                   decoration: InputDecoration(
                     hintText: 'Address',
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: countryController,
-                  focusNode: countryFocus,
-                  style: TextStyle(color: Colors.blue),
-                  validator: validateEmail,
-                  decoration: InputDecoration(
-                    hintText: 'Country',
                   ),
                 ),
                 SizedBox(height: 20),
@@ -187,7 +239,33 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  updateProfileClicked() {}
+  updateProfileClicked() async {
+    if (!_profileFormKey.currentState.validate()) {
+      print('Profile Form invalid');
+      return;
+    }
+    print('Profile Form is valid');
+    final prefs = await SharedPreferences.getInstance();
+    int addedBy = prefs.getInt(USER_ID);
+    var body = {
+      "apiKey": API_KEY,
+      "userId": addedBy.toString(),
+      "name": nameController.text,
+      "email": emailController.text,
+      "mobile": mobileController.text,
+      // "gender": genderController.text,
+      "address": addressController.text,
+      "country": selectedCountry,
+      "countryPhoneCode": selectedPhoneCode,
+    };
+    final response = await post(UPDATE_PROFILE_URL, body);
+    StatusMsg responseBody = responseFromJson(response.body);
+    if (responseBody.status == 200) {
+      print('UpdateProfile API successful');
+    } else {
+      print('UpdateProfile API failure');
+    }
+  }
 
   getProfile() async {
     print("getProfile API called");
@@ -202,11 +280,15 @@ class _ProfileState extends State<Profile> {
     if (stats.response.status == 200) {
       print('getProfile API successful');
       User user = stats.user;
+      print(user.toString());
       nameController.text = user.name;
       emailController.text = user.email;
       mobileController.text = user.mobile;
       addressController.text = user.address;
-      countryController.text = user.country;
+      selectedCountry = user.country;
+      selectedPhoneCode = user.countryPhoneCode;
+      countryController.text =
+          selectedCountry + " ( +" + selectedPhoneCode + " )";
       rewardPercentageController.text = user.rewardPercentage;
       setState(() {
         getProfileApiCalled = true;
