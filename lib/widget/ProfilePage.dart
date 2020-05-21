@@ -115,7 +115,7 @@ class _ProfileState extends State<Profile> {
                   focusNode: emailFocus,
                   onFieldSubmitted: (term) {
                     emailFocus.unfocus();
-                    FocusScope.of(context).requestFocus(mobileFocus);
+                    FocusScope.of(context).requestFocus(countryFocus);
                   },
                   style: TextStyle(color: Colors.blue),
                   validator: validateEmail,
@@ -192,10 +192,6 @@ class _ProfileState extends State<Profile> {
                   controller: addressController,
                   textInputAction: TextInputAction.next,
                   focusNode: addressFocus,
-                  onFieldSubmitted: (term) {
-                    addressFocus.unfocus();
-                    FocusScope.of(context).requestFocus(countryFocus);
-                  },
                   style: TextStyle(color: Colors.blue),
                   decoration: InputDecoration(
                     hintText: 'Address',

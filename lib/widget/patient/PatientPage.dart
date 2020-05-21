@@ -1008,11 +1008,6 @@ class _PatientPageState extends State<PatientPage> {
     final prefs = await SharedPreferences.getInstance();
     var userId = prefs.getInt(USER_ID).toString();
     var fileName = path.basename(file.path);
-    /*FormData formData = new FormData.from({
-      "file": new UploadFileInfo(file, fileName),
-      "apiKey": API_KEY,
-      "userId": userId,
-    });*/
     FormData formData = new FormData.fromMap({
       "apiKey": API_KEY,
       "userId": userId,
