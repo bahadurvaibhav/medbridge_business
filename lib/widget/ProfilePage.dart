@@ -123,6 +123,8 @@ class _ProfileState extends State<Profile> {
                     hintText: 'Email*',
                   ),
                 ),
+                SizedBox(height: 15),
+                selectGender(),
                 SizedBox(height: 10),
                 TypeAheadFormField(
                   textFieldConfiguration: TextFieldConfiguration(
@@ -171,14 +173,6 @@ class _ProfileState extends State<Profile> {
                         selectedCountry + " ( +" + selectedPhoneCode + " )";
                   },
                 ),
-                /*TextFormField(
-                  controller: countryController,
-                  focusNode: countryFocus,
-                  style: TextStyle(color: Colors.blue),
-                  decoration: InputDecoration(
-                    hintText: 'Country',
-                  ),
-                ),*/
                 SizedBox(height: 10),
                 TextFormField(
                   controller: mobileController,
@@ -239,6 +233,39 @@ class _ProfileState extends State<Profile> {
     );
   }
 
+  String genderRadioValue = "";
+
+  Widget selectGender() {
+    return Row(
+      children: <Widget>[
+        new Radio(
+          value: "Male",
+          groupValue: genderRadioValue,
+          onChanged: genderRadioChanged,
+        ),
+        new Text(
+          'Male',
+          style: new TextStyle(fontSize: 16.0),
+        ),
+        new Radio(
+          value: "Female",
+          groupValue: genderRadioValue,
+          onChanged: genderRadioChanged,
+        ),
+        new Text(
+          'Female',
+          style: new TextStyle(fontSize: 16.0),
+        ),
+      ],
+    );
+  }
+
+  genderRadioChanged(String value) {
+    setState(() {
+      genderRadioValue = value;
+    });
+  }
+
   updateProfileClicked() async {
     if (!_profileFormKey.currentState.validate()) {
       print('Profile Form invalid');
@@ -253,7 +280,7 @@ class _ProfileState extends State<Profile> {
       "name": nameController.text,
       "email": emailController.text,
       "mobile": mobileController.text,
-      // "gender": genderController.text,
+      "gender": genderRadioValue,
       "address": addressController.text,
       "country": selectedCountry,
       "countryPhoneCode": selectedPhoneCode,
@@ -287,6 +314,7 @@ class _ProfileState extends State<Profile> {
       addressController.text = user.address;
       selectedCountry = user.country;
       selectedPhoneCode = user.countryPhoneCode;
+      genderRadioValue = user.gender;
       countryController.text =
           selectedCountry + " ( +" + selectedPhoneCode + " )";
       rewardPercentageController.text = user.rewardPercentage;
