@@ -24,6 +24,7 @@ import 'package:medbridge_business/util/validate.dart';
 import 'package:medbridge_business/widget/ImageViewer.dart';
 import 'package:medbridge_business/widget/PdfViewer.dart';
 import 'package:medbridge_business/widget/patient/HospitalOptions.dart';
+import 'package:medbridge_business/widget/patient/TravelUpdates.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -135,8 +136,6 @@ class _PatientPageState extends State<PatientPage> {
     if (widget.status == Status.NEW_PATIENT) {
       submitButton = showSubmitButton(addPatientInProgress, submitClicked);
     }
-    Widget hospitalOptions = showHospitalOptions();
-
     Widget floatingActionButton = SizedBox();
     if (widget.status == Status.HOSPITAL_OPTIONS) {
       floatingActionButton = Column(
@@ -170,18 +169,65 @@ class _PatientPageState extends State<PatientPage> {
                 children: <Widget>[
                   showPatientDetails(),
                   divider(),
+                  showStatus(),
+                  showTravelUpdates(),
                   showPatientPreferencesDetails(),
                   divider(),
                   showReports(),
                   divider(),
                   submitButton,
-                  hospitalOptions,
+                  showHospitalOptions(),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget showTravelUpdates() {
+    bool isEditable = widget.status == Status.TREATMENT_CONFIRMED;
+    bool inTravelFlow = isEditable ||
+        widget.status == Status.TRAVEL_STATUS_UPDATE ||
+        widget.status == Status.VISA_APPOINTMENT ||
+        widget.status == Status.TRAVEL_STATUS_CONFIRMED;
+    bool postTravelFlow = widget.status == Status.PATIENT_RECEIVED ||
+        widget.status == Status.TREATMENT_ONGOING ||
+        widget.status == Status.TREATMENT_COMPLETED;
+    if (widget.patient != null) {
+      bool travelAssistIsYes = widget.patient.patientTravelAssist == 'Yes';
+      bool accoAssistIsYes = widget.patient.patientAccommodationAssist == 'Yes';
+      postTravelFlow = postTravelFlow && (travelAssistIsYes || accoAssistIsYes);
+    }
+    bool showTravelUpdates = inTravelFlow || postTravelFlow;
+    if (!showTravelUpdates) {
+      return SizedBox();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        TravelUpdates(
+          isEditable: isEditable,
+          status: widget.status,
+        ),
+        divider(),
+      ],
+    );
+  }
+
+  Widget showStatus() {
+    if (widget.status == Status.NEW_PATIENT) {
+      return SizedBox();
+    }
+    return Column(
+      children: <Widget>[
+        Text(
+          'STATUS: ' + statusReadable.reverse[widget.status],
+          style: statusStyle(),
+        ),
+        SizedBox(height: 16),
+      ],
     );
   }
 
@@ -433,11 +479,6 @@ class _PatientPageState extends State<PatientPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'STATUS: ' + statusReadable.reverse[widget.status],
-          style: statusStyle(),
-        ),
-        spaceToNextField,
         Text('PROBLEM:', style: goldenHeadingStyle()),
         spaceHeadingToValue,
         Text(widget.patient.patientProblem),
