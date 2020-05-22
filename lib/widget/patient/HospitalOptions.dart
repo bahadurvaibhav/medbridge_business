@@ -271,7 +271,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
 
   Widget getSwiper() {
     var screenWidth = MediaQuery.of(context).size.width;
-    double height = 480.0;
+    double height = 500.0;
     SwiperPagination pagination = SwiperPagination(
       builder: DotSwiperPaginationBuilder(
         activeColor: primary,
@@ -281,7 +281,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
       ),
     );
     if (optionSelected) {
-      height = 420.0;
+      height = height - 60.0;
       pagination = SwiperPagination(
         builder: DotSwiperPaginationBuilder(
           activeColor: primary,
@@ -308,17 +308,6 @@ class HospitalOptionsState extends State<HospitalOptions> {
         loop: false,
         autoplayDisableOnInteraction: true,
       ),
-    );
-  }
-
-  Widget getListView() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: hospitalOptions.length,
-      itemBuilder: (BuildContext ctxt, int index) {
-        return showHospitalOptionCard(index);
-      },
     );
   }
 
