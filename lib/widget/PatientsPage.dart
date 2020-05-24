@@ -48,7 +48,7 @@ class _PatientsPageState extends State<PatientsPage> {
                       child: Stack(
                         children: <Widget>[
                           Container(
-                            padding: EdgeInsets.only(top: 30),
+                            padding: EdgeInsets.only(top: 30, bottom: 75),
                             child: loadingList(),
                           ),
                           Container(

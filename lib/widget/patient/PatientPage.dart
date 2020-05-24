@@ -18,7 +18,9 @@ import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/StatusConstants.dart';
+import 'package:medbridge_business/util/file.dart';
 import 'package:medbridge_business/util/preferences.dart';
+import 'package:medbridge_business/util/snackbar.dart';
 import 'package:medbridge_business/util/style.dart';
 import 'package:medbridge_business/util/validate.dart';
 import 'package:medbridge_business/widget/ImageViewer.dart';
@@ -195,12 +197,16 @@ class _PatientPageState extends State<PatientPage> {
     bool postTravelFlow = widget.status == Status.PATIENT_RECEIVED ||
         widget.status == Status.TREATMENT_ONGOING ||
         widget.status == Status.TREATMENT_COMPLETED;
+    bool travelAssistIsYes = false;
+    bool accoAssistIsYes = false;
     if (widget.patient != null) {
-      bool travelAssistIsYes = widget.patient.patientTravelAssist == 'Yes';
-      bool accoAssistIsYes = widget.patient.patientAccommodationAssist == 'Yes';
-      postTravelFlow = postTravelFlow && (travelAssistIsYes || accoAssistIsYes);
+      travelAssistIsYes = widget.patient.patientTravelAssist == 'Yes';
+      accoAssistIsYes = widget.patient.patientAccommodationAssist == 'Yes';
     }
-    bool showTravelUpdates = inTravelFlow || postTravelFlow;
+    bool travelUpdatesShownByStatus = (inTravelFlow || postTravelFlow);
+    bool travelOrAccoAssistSelected = (travelAssistIsYes || accoAssistIsYes);
+    bool showTravelUpdates =
+        travelUpdatesShownByStatus && travelOrAccoAssistSelected;
     if (!showTravelUpdates) {
       return SizedBox();
     }
@@ -209,7 +215,10 @@ class _PatientPageState extends State<PatientPage> {
       children: <Widget>[
         TravelUpdates(
           isEditable: isEditable,
+          scaffoldKey: _scaffoldKey,
           status: widget.status,
+          travelAssistYes: travelAssistIsYes,
+          accoAssistYes: accoAssistIsYes,
         ),
         divider(),
       ],
@@ -1042,7 +1051,7 @@ class _PatientPageState extends State<PatientPage> {
     File file = await FilePicker.getFile();
     print('File picked');
     fileDescriptionController.text = description;
-    if (file == null || !await isFileValid(file)) {
+    if (file == null || !await isFileValid(file, context)) {
       _scaffoldKey.currentState.hideCurrentSnackBar();
       return;
     }
@@ -1064,13 +1073,18 @@ class _PatientPageState extends State<PatientPage> {
     } else if (statusMsg.response.status == 202) {
       // File extension not allowed
       showDocumentErrorDialog(
-          DOCUMENT_INVALID_EXTENSION_TITLE,
-          DOCUMENT_INVALID_EXTENSION_SUBTITLE +
-              ALLOWED_DOCUMENT_EXTENSIONS.toString());
+        context,
+        DOCUMENT_INVALID_EXTENSION_TITLE,
+        DOCUMENT_INVALID_EXTENSION_SUBTITLE +
+            ALLOWED_DOCUMENT_EXTENSIONS.toString(),
+      );
     } else if (statusMsg.response.status == 201) {
       // File bigger than limit
-      showDocumentErrorDialog(DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
-          DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE);
+      showDocumentErrorDialog(
+        context,
+        DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
+        DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE,
+      );
     }
     print("File upload response: $response");
     String fileDescription = fileDescriptionController.text;
@@ -1086,78 +1100,5 @@ class _PatientPageState extends State<PatientPage> {
       fileUploadingInProgress = false;
     });
     setState(() {});
-  }
-
-  SnackBar showSnackbarWithCheck(String text) {
-    return new SnackBar(
-      duration: new Duration(seconds: 4),
-      content: new Row(
-        children: <Widget>[
-          Icon(
-            Icons.check,
-            color: Colors.blue,
-            size: 40,
-          ),
-          SizedBox(width: 10),
-          new Text(text),
-        ],
-      ),
-    );
-  }
-
-  SnackBar showSnackbarWith(String text) {
-    return new SnackBar(
-      content: new Row(
-        children: <Widget>[new Text(text)],
-      ),
-    );
-  }
-
-  SnackBar uploadingDocumentSnackbar() {
-    return new SnackBar(
-      content: new Row(
-        children: <Widget>[
-          new CircularProgressIndicator(),
-          SizedBox(width: 10),
-          new Text("Uploading Document...")
-        ],
-      ),
-    );
-  }
-
-  Future<bool> isFileValid(File file) async {
-    String fileExtension = path.extension(file.path);
-    if (!ALLOWED_DOCUMENT_EXTENSIONS.contains(fileExtension.toLowerCase())) {
-      // File not valid extension
-      showDocumentErrorDialog(
-          DOCUMENT_INVALID_EXTENSION_TITLE,
-          DOCUMENT_INVALID_EXTENSION_SUBTITLE +
-              ALLOWED_DOCUMENT_EXTENSIONS.toString());
-      return false;
-    }
-    int fileSize = await file.length();
-    if (fileSize > DOCUMENT_MAX_SIZE * 1000000) {
-      // File bigger than limit
-      showDocumentErrorDialog(DOCUMENT_MAX_SIZE_EXCEEDED_TITLE,
-          DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE);
-      return false;
-    }
-    return true;
-  }
-
-  showDocumentErrorDialog(String title, String subtitle) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(subtitle),
-        actions: <Widget>[
-          FlatButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Close'),
-          ),
-        ],
-      ),
-    );
   }
 }

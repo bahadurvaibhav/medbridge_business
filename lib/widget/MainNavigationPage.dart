@@ -16,7 +16,7 @@ class MainNavigationPage extends StatefulWidget {
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
-  static int _selectedIndex = 0;
+  static int _selectedIndex = 1;
   PageController pageController = PageController(initialPage: _selectedIndex);
 
   @override
