@@ -23,8 +23,6 @@ import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/util/snackbar.dart';
 import 'package:medbridge_business/util/style.dart';
 import 'package:medbridge_business/util/validate.dart';
-import 'package:medbridge_business/widget/ImageViewer.dart';
-import 'package:medbridge_business/widget/PdfViewer.dart';
 import 'package:medbridge_business/widget/patient/HospitalOptions.dart';
 import 'package:medbridge_business/widget/patient/TravelUpdates.dart';
 import 'package:path/path.dart' as path;

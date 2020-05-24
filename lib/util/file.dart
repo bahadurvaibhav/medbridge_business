@@ -1,17 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:medbridge_business/domain/DocumentMetadata.dart';
-import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
 import 'package:medbridge_business/widget/ImageViewer.dart';
 import 'package:medbridge_business/widget/PdfViewer.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 
 Future<void> viewFile(
   BuildContext context,
