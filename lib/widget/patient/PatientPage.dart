@@ -174,12 +174,12 @@ class _PatientPageState extends State<PatientPage> {
                   updateStatusButton(),
                   showVisaAppointmentDate(),
                   showTravelUpdates(),
+                  showHospitalOptions(),
                   showPatientPreferencesDetails(),
                   divider(),
                   showReports(),
                   divider(),
                   submitButton,
-                  showHospitalOptions(),
                 ],
               ),
             ),
@@ -429,9 +429,12 @@ class _PatientPageState extends State<PatientPage> {
             selectable: true,
             hospitalOptions: toHospitalOption(widget.patient.hospitalOptions),
           ),
+          spaceHeadingToValue,
+          showSubmitButton(
+            submitSelectHospitalOptionInProgress,
+            submitSelectHospitalOptionClicked,
+          ),
           divider(),
-          showSubmitButton(submitSelectHospitalOptionInProgress,
-              submitSelectHospitalOptionClicked),
         ],
       );
     } else {
