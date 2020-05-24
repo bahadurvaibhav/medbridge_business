@@ -1,16 +1,16 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:medbridge_business/domain/DocumentMetadata.dart';
 import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/ResponseWithId.dart';
+import 'package:medbridge_business/gateway/StatusMsg.dart';
+import 'package:medbridge_business/gateway/TravelStatusResponse.dart';
 import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
+import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/StatusConstants.dart';
 import 'package:medbridge_business/util/file.dart';
@@ -18,8 +18,6 @@ import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/util/snackbar.dart';
 import 'package:medbridge_business/util/style.dart';
 import 'package:medbridge_business/util/validate.dart';
-import 'package:medbridge_business/widget/ImageViewer.dart';
-import 'package:medbridge_business/widget/PdfViewer.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,12 +28,14 @@ class TravelUpdates extends StatefulWidget {
   final Status status;
   final bool travelAssistYes;
   final bool accoAssistYes;
+  final String patientId;
 
   TravelUpdates({
     Key key,
     @required this.isEditable,
     @required this.scaffoldKey,
     @required this.status,
+    @required this.patientId,
     @required this.travelAssistYes,
     @required this.accoAssistYes,
   }) : super(key: key);
@@ -58,24 +58,93 @@ class _TravelUpdatesState extends State<TravelUpdates> {
   FocusNode budgetFocus = FocusNode();
 
   final _budgetFormKey = GlobalKey<FormState>();
-  bool apiInProgress = false;
+  bool apiCompleted = false;
+  TravelStatus travelStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    getTravelStatusUpdate();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        travelUpdatesSection(),
-        visaAppointmentSection(),
-        SizedBox(height: 10),
-        showSubmitButton(),
-      ],
+    Widget showItems = Center(child: CircularProgressIndicator());
+    if (!widget.isEditable) {
+      if (apiCompleted) {
+        showItems = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            viewableTravelUpdates(),
+            viewableVisaAppointment(),
+            showDocuments(
+              'Visa Appointment Form',
+              uploadedVisaAppointmentDocuments,
+              visaAppointmentFileUploadingInProgress,
+              chooseFileVisaAppointmentFormClicked,
+            ),
+          ],
+        );
+      } else {
+        showItems = Center(child: CircularProgressIndicator());
+      }
+    } else {
+      showItems = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          editableTravelUpdates(),
+          editableVisaAppointment(),
+          spaceToNextField,
+          showSubmitButton(),
+        ],
+      );
+    }
+
+    return showItems;
+  }
+
+  void getTravelStatusUpdate() async {
+    setState(() {
+      apiCompleted = false;
+    });
+    var body = {
+      "apiKey": API_KEY,
+      "patientId": widget.patientId,
+    };
+    final response = await post(GET_TRAVEL_STATUS_UPDATE_URL, body);
+    TravelStatusResponse responseBody =
+        travelStatusResponseFromJson(response.body);
+    if (responseBody.response.status == 200) {
+      travelStatus = responseBody.travelStatus;
+      travelStatus.passportDocuments.forEach((element) {
+        uploadedPassportDocuments
+            .add(documentMetadataFrom(element, 'PASSPORT'));
+      });
+      travelStatus.visaAppointmentDocuments.forEach((element) {
+        uploadedVisaAppointmentDocuments
+            .add(documentMetadataFrom(element, 'VISA APPOINTMENT FORM'));
+      });
+      setState(() {
+        apiCompleted = true;
+      });
+    }
+  }
+
+  DocumentMetadata documentMetadataFrom(Document document, String description) {
+    return new DocumentMetadata(
+      int.tryParse(document.id),
+      description,
+      document.documentName,
+      document.storedDocumentName,
     );
   }
 
   Widget showSubmitButton() {
+    if (!widget.isEditable) {
+      return SizedBox();
+    }
     Widget text = SizedBox();
-    if (apiInProgress) {
+    if (apiCompleted) {
       text = CircularProgressIndicator(
         valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
       );
@@ -111,7 +180,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     );
   }
 
-  void buttonClicked() {
+  Future<void> buttonClicked() async {
     print('Submit in Travel updates clicked');
     if (widget.accoAssistYes) {
       if (!_budgetFormKey.currentState.validate()) {
@@ -136,22 +205,69 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       }
     }
     print('Travel status form and documents valid');
+
+    var body = {
+      "apiKey": API_KEY,
+      "patientId": widget.patientId,
+      "budgetForAcco": budgetController.text,
+      "arrivalDate": getDateString(arrivalDateTime),
+      "visaAppointmentDate": getDateString(visaAppointmentDateTime),
+      "uploadedPassport": getDocumentsString(uploadedPassportDocuments),
+      "uploadedVisaAppointmentForm":
+          getDocumentsString(uploadedVisaAppointmentDocuments),
+    };
+    final response = await post(TRAVEL_STATUS_UPDATE_URL, body);
+    StatusMsg statusMsg = responseFromJson(response.body);
+    if (statusMsg.status == 200) {
+      widget.scaffoldKey.currentState.showSnackBar(
+        showSnackbarWithCheck("Submitted successfully"),
+      );
+      Navigator.pop(context);
+    } else {
+      widget.scaffoldKey.currentState.showSnackBar(
+        showSnackbarWith("Unable to submit. Try again later"),
+      );
+    }
   }
 
-  Widget visaAppointmentSection() {
-    if (widget.isEditable) {
-      return editableVisaAppointment();
+  String getDocumentsString(List<DocumentMetadata> documents) {
+    List<String> documentIds = new List();
+    documents.forEach((document) {
+      documentIds.add(
+        document.documentId.toString(),
+      );
+    });
+    return documentIds.join(",");
+  }
+
+  String getDateString(DateTime dateTime) {
+    String dateString = "";
+    if (dateTime != null) {
+      dateString = dateTime.toIso8601String();
     }
-    return viewableVisaAppointment();
+    return dateString;
   }
 
   Widget viewableVisaAppointment() {
+    String visaAppointmentDate = "-";
+    if (travelStatus.visaAppointmentDate.isNotEmpty) {
+      visaAppointmentDateTime =
+          DateTime.parse(travelStatus.visaAppointmentDate);
+      visaAppointmentDate = getDateDisplay(visaAppointmentDateTime, '-');
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         divider(),
         visaAppointmentHeading(),
-        Text('Visa appointment Viewable'),
+        spaceToNextField,
+        Text(
+          'Desired Visa Appointment Date:',
+          style: goldenHeadingStyle(),
+        ),
+        spaceHeadingToValue,
+        Text(visaAppointmentDate),
+        spaceToNextField,
       ],
     );
   }
@@ -203,15 +319,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     print('download from ${urlPath}');
     await Dio().download(urlPath, fullPath);
 
-    File file = new File(fullPath);
-    Uint8List bytes = file.readAsBytesSync();
-    final ByteData byteData = ByteData.view(bytes.buffer);
-    await Share.file(
-      'Info_for_Visa',
-      'Info_for_Visa.doc',
-      byteData.buffer.asUint8List(),
-      'application/msword',
-    );
+    showWordDocument(fullPath);
   }
 
   Widget visaAppointmentHeading() {
@@ -219,13 +327,6 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       'VISA APPOINTMENT FORM:',
       style: addPatientHeadingStyle(),
     );
-  }
-
-  Widget travelUpdatesSection() {
-    if (widget.isEditable) {
-      return editableTravelUpdates();
-    }
-    return viewableTravelUpdates();
   }
 
   Widget editableTravelUpdates() {
@@ -386,14 +487,11 @@ class _TravelUpdatesState extends State<TravelUpdates> {
   viewDocument(DocumentMetadata uploadedDocument) async {
     print('downloadDocument() clicked');
 
-    String fileName = uploadedDocument.fileName;
     String storedFileName = uploadedDocument.storedDocumentName;
-    String fileExtension =
-        storedFileName.substring(storedFileName.lastIndexOf(".") + 1);
-    print('File extension: ' + fileExtension);
+
     String fullPath = "";
 
-    if (widget.status == Status.NEW_PATIENT) {
+    if (widget.isEditable) {
       fullPath = storedFileName;
     } else {
       var tempDir = await getTemporaryDirectory();
@@ -405,20 +503,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       await Dio().download(urlPath, fullPath);
     }
 
-    if (fileExtension.toLowerCase() == "pdf") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MyPdfViewer(fullPath, fileName)),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageViewer(fullPath, fileName),
-        ),
-      );
-    }
+    await viewFile(context, uploadedDocument, fullPath);
   }
 
   Widget showDocuments(String title, List<DocumentMetadata> documents,
@@ -614,12 +699,61 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     return path.basename(file.path);
   }
 
+  Widget spaceHeadingToValue = SizedBox(height: 8);
+  Widget spaceToNextField = SizedBox(height: 16);
+
   Widget viewableTravelUpdates() {
+    Widget accoAssistWidgets = SizedBox();
+    if (widget.accoAssistYes) {
+      accoAssistWidgets = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Budget for accomodation:',
+            style: goldenHeadingStyle(),
+          ),
+          Text(travelStatus.budgetForAcco),
+        ],
+      );
+    }
+
+    Widget travelAssistWidgets = SizedBox();
+    if (widget.travelAssistYes) {
+      String arrivalDate = "-";
+      if (travelStatus.arrivalDate.isNotEmpty) {
+        arrivalDateTime = DateTime.parse(travelStatus.arrivalDate);
+        arrivalDate = getDateDisplay(arrivalDateTime, '-');
+      }
+      travelAssistWidgets = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Expected Arrival Date:',
+            style: goldenHeadingStyle(),
+          ),
+          spaceHeadingToValue,
+          Text(arrivalDate),
+          spaceToNextField,
+          showDocuments(
+            'Passport',
+            uploadedPassportDocuments,
+            passportFileUploadingInProgress,
+            chooseFilePassportClicked,
+          ),
+          spaceToNextField,
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         travelUpdatesHeading(),
-        Text('Travel updates Viewable'),
+        spaceToNextField,
+        accoAssistWidgets,
+        spaceToNextField,
+        travelAssistWidgets,
+        spaceHeadingToValue,
       ],
     );
   }

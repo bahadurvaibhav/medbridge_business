@@ -1,11 +1,11 @@
-class Document {
+class PatientDocument {
   String id;
   DateTime created;
   String documentDescription;
   String documentName;
   String storedDocumentName;
 
-  Document({
+  PatientDocument({
     this.id,
     this.created,
     this.documentDescription,
@@ -13,7 +13,8 @@ class Document {
     this.storedDocumentName,
   });
 
-  factory Document.fromJson(Map<String, dynamic> json) => Document(
+  factory PatientDocument.fromJson(Map<String, dynamic> json) =>
+      PatientDocument(
         id: json["id"],
         created: DateTime.parse(json["created"]),
         documentDescription: json["documentDescription"],

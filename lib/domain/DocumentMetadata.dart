@@ -9,8 +9,12 @@ class DocumentMetadata {
   String fileName;
   String storedDocumentName;
 
-  DocumentMetadata(this.documentId, this.description, this.fileName,
-      this.storedDocumentName);
+  DocumentMetadata(
+    this.documentId,
+    this.description,
+    this.fileName,
+    this.storedDocumentName,
+  );
 
   Map<String, dynamic> toJson() => {
         "documentId": documentId,

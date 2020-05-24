@@ -25,7 +25,7 @@ class PatientResponse {
   String patientAccommodationAssist;
   String preferredHospitalId;
   DateTime created;
-  List<Document> documents;
+  List<PatientDocument> documents;
   List<HospitalOptionResponse> hospitalOptions;
 
   PatientResponse({
@@ -61,8 +61,8 @@ class PatientResponse {
         patientAccommodationAssist: json["patientAccommodationAssist"],
         preferredHospitalId: json["preferredHospitalId"],
         created: DateTime.parse(json["created"]),
-        documents: List<Document>.from(
-            json["documents"].map((x) => Document.fromJson(x))),
+        documents: List<PatientDocument>.from(
+            json["documents"].map((x) => PatientDocument.fromJson(x))),
         hospitalOptions: List<HospitalOptionResponse>.from(
             json["hospitalOptions"]
                 .map((x) => HospitalOptionResponse.fromJson(x))),

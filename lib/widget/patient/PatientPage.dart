@@ -217,6 +217,7 @@ class _PatientPageState extends State<PatientPage> {
           isEditable: isEditable,
           scaffoldKey: _scaffoldKey,
           status: widget.status,
+          patientId: widget.patient.id,
           travelAssistYes: travelAssistIsYes,
           accoAssistYes: accoAssistIsYes,
         ),
@@ -994,11 +995,8 @@ class _PatientPageState extends State<PatientPage> {
   viewDocument(DocumentMetadata uploadedDocument) async {
     print('downloadDocument() clicked');
 
-    String fileName = uploadedDocument.fileName;
     String storedFileName = uploadedDocument.storedDocumentName;
-    String fileExtension =
-        storedFileName.substring(storedFileName.lastIndexOf(".") + 1);
-    print('File extension: ' + fileExtension);
+
     String fullPath = "";
 
     if (widget.status == Status.NEW_PATIENT) {
@@ -1013,20 +1011,7 @@ class _PatientPageState extends State<PatientPage> {
       await Dio().download(urlPath, fullPath);
     }
 
-    if (fileExtension.toLowerCase() == "pdf") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MyPdfViewer(fullPath, fileName)),
-      );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageViewer(fullPath, fileName),
-        ),
-      );
-    }
+    await viewFile(context, uploadedDocument, fullPath);
   }
 
   _chooseFileClicked() async {

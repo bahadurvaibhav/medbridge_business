@@ -17,3 +17,7 @@ const String GET_PROFILE_URL = BUSINESS_BASE_URL + 'getProfile.php';
 const String UPDATE_PROFILE_URL = BUSINESS_BASE_URL + 'updateProfile.php';
 const String DOWNLOAD_VISA_APPOINTMENT_URL =
     BUSINESS_BASE_URL + 'documents/Info_for_Visa.doc';
+const String TRAVEL_STATUS_UPDATE_URL =
+    BUSINESS_BASE_URL + 'travelStatusUpdate.php';
+const String GET_TRAVEL_STATUS_UPDATE_URL =
+    BUSINESS_BASE_URL + 'getTravelStatusUpdate.php';

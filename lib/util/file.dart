@@ -1,8 +1,57 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:medbridge_business/domain/DocumentMetadata.dart';
+import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
+import 'package:medbridge_business/widget/ImageViewer.dart';
+import 'package:medbridge_business/widget/PdfViewer.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
+Future<void> viewFile(
+  BuildContext context,
+  DocumentMetadata uploadedDocument,
+  String fullPath,
+) async {
+  String fileName = uploadedDocument.fileName;
+  String storedFileName = uploadedDocument.storedDocumentName;
+  String fileExtension =
+      storedFileName.substring(storedFileName.lastIndexOf(".") + 1);
+  print('File extension: ' + fileExtension);
+  if (fileExtension.toLowerCase() == "pdf") {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MyPdfViewer(fullPath, fileName)),
+    );
+  } else if (fileExtension.toLowerCase() == "doc" ||
+      fileExtension.toLowerCase() == "docx") {
+    await showWordDocument(fullPath);
+  } else {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewer(fullPath, fileName),
+      ),
+    );
+  }
+}
+
+Future<void> showWordDocument(String fullPath) async {
+  File file = new File(fullPath);
+  Uint8List bytes = file.readAsBytesSync();
+  final ByteData byteData = ByteData.view(bytes.buffer);
+  await Share.file(
+    'Info_for_Visa',
+    'Info_for_Visa.doc',
+    byteData.buffer.asUint8List(),
+    'application/msword',
+  );
+}
 
 Future<bool> isFileValid(File file, BuildContext context) async {
   String fileExtension = path.extension(file.path);
