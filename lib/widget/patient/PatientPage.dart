@@ -259,6 +259,10 @@ class _PatientPageState extends State<PatientPage> {
     if (widget.status == Status.PATIENT_SUBMITTED ||
         widget.status == Status.HOSPITAL_OPTIONS ||
         widget.status == Status.TREATMENT_CONFIRMED ||
+        widget.status == Status.TRAVEL_STATUS_UPDATE ||
+        widget.status == Status.VISA_APPOINTMENT ||
+        widget.status == Status.TRAVEL_STATUS_CONFIRMED ||
+        widget.status == Status.PATIENT_RECEIVED ||
         widget.status == Status.TREATMENT_ONGOING ||
         widget.status == Status.TREATMENT_COMPLETED) {
       List<String> preferredHospitalId = patient.preferredHospitalId.split(',');
