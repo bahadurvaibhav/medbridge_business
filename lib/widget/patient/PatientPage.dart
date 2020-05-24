@@ -171,6 +171,7 @@ class _PatientPageState extends State<PatientPage> {
                   showPatientDetails(),
                   divider(),
                   showStatus(),
+                  updateStatusButton(),
                   showVisaAppointmentDate(),
                   showTravelUpdates(),
                   showPatientPreferencesDetails(),
@@ -186,6 +187,98 @@ class _PatientPageState extends State<PatientPage> {
         ),
       ),
     );
+  }
+
+  bool updateStatusVisaAppointmentInProgress = false;
+  Widget spaceHeadingToValue = SizedBox(height: 8);
+  Widget spaceToNextField = SizedBox(height: 16);
+
+  Widget updateStatusButton() {
+    if (widget.status == Status.VISA_APPOINTMENT) {
+      return Column(
+        children: <Widget>[
+          showSubmitButtonWithTitle(
+            updateStatusVisaAppointmentInProgress,
+            updateStatusVisaAppointmentClicked,
+            "Click here if " +
+                statusReadable.reverse[Status.VISA_APPOINTMENT] +
+                " completed",
+            18,
+          ),
+          spaceToNextField,
+        ],
+      );
+    }
+    return SizedBox();
+  }
+
+  Widget showSubmitButtonWithTitle(
+      bool inProgress, Function buttonClicked, String title, double fontSize) {
+    Widget text = SizedBox();
+    if (inProgress) {
+      text = CircularProgressIndicator(
+        valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
+      );
+    } else {
+      text = Text(
+        title,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+          fontSize: fontSize,
+          letterSpacing: 1.2,
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Expanded(
+          child: RaisedButton(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            color: primary,
+            child: Container(
+              height: 50,
+              child: Center(child: text),
+            ),
+            onPressed: buttonClicked,
+          ),
+        ),
+      ],
+    );
+  }
+
+  updateStatusVisaAppointmentClicked() async {
+    setState(() {
+      updateStatusVisaAppointmentInProgress = true;
+    });
+    var body = {
+      "patientId": widget.patient.id,
+      "apiKey": API_KEY,
+    };
+    print(body.toString());
+    final response = await post(UPDATE_STATUS_VISA_APPOINTMENT_URL, body);
+    StatusMsg statusMsg = responseFromJson(response.body);
+    if (statusMsg.status == 200) {
+      print('Status visa appointment update API success');
+      setState(() {
+        updateStatusVisaAppointmentInProgress = false;
+      });
+      _scaffoldKey.currentState
+          .showSnackBar(showSnackbarWithCheck("Status updated successfully"));
+      Navigator.pop(context);
+    } else {
+      print('Status visa appointment update API failed with msg: ' +
+          statusMsg.msg);
+      setState(() {
+        updateStatusVisaAppointmentInProgress = false;
+      });
+      _scaffoldKey.currentState.showSnackBar(
+          showSnackbarWith("Unable to update status. Try again later."));
+    }
   }
 
   Widget showVisaAppointmentDate() {
