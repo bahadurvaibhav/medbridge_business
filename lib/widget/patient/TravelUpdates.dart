@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:medbridge_business/domain/DocumentMetadata.dart';
 import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
@@ -42,18 +45,183 @@ class TravelUpdates extends StatefulWidget {
 }
 
 class _TravelUpdatesState extends State<TravelUpdates> {
-  final _uploadDocumentFormKey = GlobalKey<FormState>();
-  bool fileUploadingInProgress = false;
-  bool uploadDocumentsFilled = false;
-  List<DocumentMetadata> uploadedDocuments = new List();
+  bool passportFileUploadingInProgress = false;
+  List<DocumentMetadata> uploadedPassportDocuments = new List();
+
+  bool visaAppointmentFileUploadingInProgress = false;
+  List<DocumentMetadata> uploadedVisaAppointmentDocuments = new List();
 
   DateTime arrivalDateTime;
+  DateTime visaAppointmentDateTime;
 
   TextEditingController budgetController = new TextEditingController();
   FocusNode budgetFocus = FocusNode();
 
+  final _budgetFormKey = GlobalKey<FormState>();
+  bool apiInProgress = false;
+
   @override
   Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        travelUpdatesSection(),
+        visaAppointmentSection(),
+        SizedBox(height: 10),
+        showSubmitButton(),
+      ],
+    );
+  }
+
+  Widget showSubmitButton() {
+    Widget text = SizedBox();
+    if (apiInProgress) {
+      text = CircularProgressIndicator(
+        valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
+      );
+    } else {
+      text = Text(
+        "Submit",
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+          fontSize: 24,
+          letterSpacing: 1.2,
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Expanded(
+          child: RaisedButton(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            color: primary,
+            child: Container(
+              height: 50,
+              child: Center(child: text),
+            ),
+            onPressed: buttonClicked,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void buttonClicked() {
+    print('Submit in Travel updates clicked');
+    if (widget.accoAssistYes) {
+      if (!_budgetFormKey.currentState.validate()) {
+        print('Travel status form invalid');
+        return;
+      }
+    }
+    if (widget.travelAssistYes) {
+      if (uploadedPassportDocuments.length == 0) {
+        print('No passport uploaded');
+        widget.scaffoldKey.currentState.showSnackBar(
+          showSnackbarWith("Please upload passport"),
+        );
+        return;
+      }
+      if (uploadedVisaAppointmentDocuments.length == 0) {
+        print('No visa appointment form uploaded');
+        widget.scaffoldKey.currentState.showSnackBar(
+          showSnackbarWith("Please upload visa appointment form"),
+        );
+        return;
+      }
+    }
+    print('Travel status form and documents valid');
+  }
+
+  Widget visaAppointmentSection() {
+    if (widget.isEditable) {
+      return editableVisaAppointment();
+    }
+    return viewableVisaAppointment();
+  }
+
+  Widget viewableVisaAppointment() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        divider(),
+        visaAppointmentHeading(),
+        Text('Visa appointment Viewable'),
+      ],
+    );
+  }
+
+  Widget editableVisaAppointment() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        divider(),
+        visaAppointmentHeading(),
+        SizedBox(height: 12),
+        showVisaAppointmentDate(),
+        SizedBox(height: 6),
+        downloadVisaAppointmentFormButton(),
+        SizedBox(height: 6),
+        showDocuments(
+          'Visa Appointment Form',
+          uploadedVisaAppointmentDocuments,
+          visaAppointmentFileUploadingInProgress,
+          chooseFileVisaAppointmentFormClicked,
+        ),
+      ],
+    );
+  }
+
+  Widget downloadVisaAppointmentFormButton() {
+    return RaisedButton.icon(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(2.0),
+      ),
+      color: primary,
+      icon: Icon(
+        Icons.file_download,
+        color: Colors.white,
+      ),
+      label: Text(
+        "Download Visa Appointment Form",
+        style: TextStyle(color: Colors.white),
+      ),
+      onPressed: shareVisaAppointmentForm,
+    );
+  }
+
+  Future<void> shareVisaAppointmentForm() async {
+    var tempDir = await getTemporaryDirectory();
+    String fullPath = tempDir.path + "/Info_for_Visa.doc";
+    print('download to path ${fullPath}');
+    String urlPath = DOWNLOAD_VISA_APPOINTMENT_URL;
+    print('download from ${urlPath}');
+    await Dio().download(urlPath, fullPath);
+
+    File file = new File(fullPath);
+    Uint8List bytes = file.readAsBytesSync();
+    final ByteData byteData = ByteData.view(bytes.buffer);
+    await Share.file(
+      'Info_for_Visa',
+      'Info_for_Visa.doc',
+      byteData.buffer.asUint8List(),
+      'application/msword',
+    );
+  }
+
+  Widget visaAppointmentHeading() {
+    return Text(
+      'VISA APPOINTMENT FORM:',
+      style: addPatientHeadingStyle(),
+    );
+  }
+
+  Widget travelUpdatesSection() {
     if (widget.isEditable) {
       return editableTravelUpdates();
     }
@@ -66,13 +234,16 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       accoAssistWidgets = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          TextFormField(
-            controller: budgetController,
-            focusNode: budgetFocus,
-            style: TextStyle(color: Colors.blue),
-            validator: validateName,
-            decoration: InputDecoration(
-              hintText: 'Budget for accomodation*',
+          Form(
+            key: _budgetFormKey,
+            child: TextFormField(
+              controller: budgetController,
+              focusNode: budgetFocus,
+              style: TextStyle(color: Colors.blue),
+              validator: validateName,
+              decoration: InputDecoration(
+                hintText: 'Budget for accomodation*',
+              ),
             ),
           ),
         ],
@@ -86,7 +257,12 @@ class _TravelUpdatesState extends State<TravelUpdates> {
         children: <Widget>[
           showArrivalDate(),
           SizedBox(height: 6),
-          showPassportPages(),
+          showDocuments(
+            'Passport',
+            uploadedPassportDocuments,
+            passportFileUploadingInProgress,
+            chooseFilePassportClicked,
+          ),
           SizedBox(height: 6),
         ],
       );
@@ -95,16 +271,32 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          'TRAVEL UPDATES:',
-          style: addPatientHeadingStyle(),
-        ),
+        travelUpdatesHeading(),
         SizedBox(height: 6),
         accoAssistWidgets,
         SizedBox(height: 12),
         travelAssistWidgets,
         SizedBox(height: 6),
       ],
+    );
+  }
+
+  Widget travelUpdatesHeading() {
+    return Text(
+      'TRAVEL UPDATES:',
+      style: addPatientHeadingStyle(),
+    );
+  }
+
+  Widget showVisaAppointmentDate() {
+    Function onConfirm = (date) {
+      visaAppointmentDateTime = date;
+      setState(() {});
+    };
+    return showDate(
+      visaAppointmentDateTime,
+      onConfirm,
+      "Desired VISA Appointment Date",
     );
   }
 
@@ -229,23 +421,24 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     }
   }
 
-  Widget showPassportPages() {
+  Widget showDocuments(String title, List<DocumentMetadata> documents,
+      bool fileUploadingInProgress, Function fileClicked) {
     Widget addDocument = SizedBox();
     if (widget.isEditable) {
       addDocument = Form(
-        key: _uploadDocumentFormKey,
         child: Row(
           children: <Widget>[
             Expanded(
               child: Text(
-                'Upload Passport',
+                'Upload ' + title,
                 style: goldenHeadingStyle(),
               ),
             ),
             SizedBox(width: 10),
             RaisedButton.icon(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(2.0)),
+                borderRadius: BorderRadius.circular(2.0),
+              ),
               color: primary,
               icon: Icon(
                 Icons.file_upload,
@@ -255,7 +448,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
                 "Choose File",
                 style: TextStyle(color: Colors.white),
               ),
-              onPressed: _chooseFileClicked,
+              onPressed: fileClicked,
             ),
           ],
         ),
@@ -263,46 +456,20 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     }
 
     Widget listView = Center(child: CircularProgressIndicator());
-    if (uploadedDocuments.length > 0) {
+    if (documents.length > 0) {
       listView = ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: uploadedDocuments.length,
+        itemCount: documents.length,
         itemBuilder: (BuildContext ctxt, int index) {
-          DocumentMetadata uploadedDocument = uploadedDocuments[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: Row(
-              children: <Widget>[
-                Expanded(child: Text(uploadedDocument.description)),
-                SizedBox(width: 15),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => viewDocument(uploadedDocument),
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Icons.attach_file),
-                        Flexible(
-                          child: Text(
-                            uploadedDocument.fileName,
-                            style: TextStyle(
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
+          DocumentMetadata uploadedDocument = documents[index];
+          return showDocument(uploadedDocument);
         },
       );
     } else {
       listView = Center(
         child: Text(
-          'No passport found',
+          'No ' + title + ' found',
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -327,12 +494,39 @@ class _TravelUpdatesState extends State<TravelUpdates> {
     );
   }
 
-  _chooseFileClicked() async {
-    if (!_uploadDocumentFormKey.currentState.validate()) {
-      return;
-    }
+  Widget showDocument(DocumentMetadata uploadedDocument) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(child: Text(uploadedDocument.description)),
+          SizedBox(width: 15),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => viewDocument(uploadedDocument),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.attach_file),
+                  Flexible(
+                    child: Text(
+                      uploadedDocument.fileName,
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  chooseFilePassportClicked() async {
     setState(() {
-      fileUploadingInProgress = true;
+      passportFileUploadingInProgress = true;
     });
     widget.scaffoldKey.currentState.showSnackBar(uploadingDocumentSnackbar());
     File file = await FilePicker.getFile();
@@ -341,15 +535,55 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       widget.scaffoldKey.currentState.hideCurrentSnackBar();
       return;
     }
+    int referenceId = await uploadDocument(file);
+    uploadedPassportDocuments.add(
+      new DocumentMetadata(
+          referenceId, 'PASSPORT', getFileName(file), file.path),
+    );
+    widget.scaffoldKey.currentState.hideCurrentSnackBar();
+    widget.scaffoldKey.currentState
+        .showSnackBar(showSnackbarWithCheck("File uploaded"));
+    setState(() {
+      passportFileUploadingInProgress = false;
+    });
+    setState(() {});
+  }
+
+  chooseFileVisaAppointmentFormClicked() async {
+    setState(() {
+      visaAppointmentFileUploadingInProgress = true;
+    });
+    widget.scaffoldKey.currentState.showSnackBar(uploadingDocumentSnackbar());
+    File file = await FilePicker.getFile();
+    print('File picked');
+    if (file == null || !await isFileValid(file, context)) {
+      widget.scaffoldKey.currentState.hideCurrentSnackBar();
+      return;
+    }
+    int referenceId = await uploadDocument(file);
+    uploadedVisaAppointmentDocuments.add(
+      new DocumentMetadata(
+          referenceId, 'VISA APPOINTMENT FORM', getFileName(file), file.path),
+    );
+    widget.scaffoldKey.currentState.hideCurrentSnackBar();
+    widget.scaffoldKey.currentState
+        .showSnackBar(showSnackbarWithCheck("File uploaded"));
+    setState(() {
+      visaAppointmentFileUploadingInProgress = false;
+    });
+    setState(() {});
+  }
+
+  Future<int> uploadDocument(File file) async {
     final prefs = await SharedPreferences.getInstance();
     var userId = prefs.getInt(USER_ID).toString();
-    var fileName = path.basename(file.path);
+
     FormData formData = new FormData.fromMap({
       "apiKey": API_KEY,
       "userId": userId,
       "file": await MultipartFile.fromFile(
         file.path,
-        filename: fileName,
+        filename: getFileName(file),
       ),
     });
     Response response = await Dio().post(UPLOAD_DOCUMENT_URL, data: formData);
@@ -373,20 +607,20 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       );
     }
     print("File upload response: $response");
-    uploadedDocuments.add(
-      new DocumentMetadata(
-          statusMsg.referenceId, 'PASSPORT', fileName, file.path),
-    );
-    widget.scaffoldKey.currentState.hideCurrentSnackBar();
-    widget.scaffoldKey.currentState
-        .showSnackBar(showSnackbarWithCheck("File uploaded"));
-    setState(() {
-      fileUploadingInProgress = false;
-    });
-    setState(() {});
+    return statusMsg.referenceId;
+  }
+
+  String getFileName(File file) {
+    return path.basename(file.path);
   }
 
   Widget viewableTravelUpdates() {
-    return Text('Viewable');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        travelUpdatesHeading(),
+        Text('Travel updates Viewable'),
+      ],
+    );
   }
 }

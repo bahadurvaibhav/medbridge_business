@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:medbridge_business/util/Colors.dart';
 
+Widget divider() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 20.0),
+    child: Divider(
+      color: golden,
+      thickness: 1.0,
+    ),
+  );
+}
+
 TextStyle addPatientTitleStyle() {
   return TextStyle(
     color: primary,

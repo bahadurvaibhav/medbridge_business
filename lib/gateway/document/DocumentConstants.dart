@@ -3,7 +3,9 @@ const List<String> ALLOWED_DOCUMENT_EXTENSIONS = [
   '.jpg',
   '.jpeg',
   '.png',
-  '.pdf'
+  '.pdf',
+  '.doc',
+  '.docx',
 ];
 const String DOCUMENT_MAX_SIZE_EXCEEDED_TITLE = 'File size too big';
 const String DOCUMENT_MAX_SIZE_EXCEEDED_SUBTITLE =

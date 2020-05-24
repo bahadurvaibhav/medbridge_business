@@ -886,16 +886,6 @@ class _PatientPageState extends State<PatientPage> {
   Widget _buildCountryPhoneCodeDropdownItem(Country country) =>
       Text('+ ${country.phoneCode}');
 
-  Widget divider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20.0),
-      child: Divider(
-        color: golden,
-        thickness: 1.0,
-      ),
-    );
-  }
-
   Widget showReports() {
     Widget addDocument = SizedBox();
     if (widget.status == Status.NEW_PATIENT) {
