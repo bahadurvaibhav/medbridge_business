@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:medbridge_business/domain/DocumentMetadata.dart';
 import 'package:medbridge_business/gateway/ApiUrlConstants.dart';
 import 'package:medbridge_business/gateway/ResponseWithId.dart';
@@ -13,6 +12,7 @@ import 'package:medbridge_business/gateway/document/DocumentConstants.dart';
 import 'package:medbridge_business/gateway/gateway.dart';
 import 'package:medbridge_business/util/Colors.dart';
 import 'package:medbridge_business/util/StatusConstants.dart';
+import 'package:medbridge_business/util/date.dart';
 import 'package:medbridge_business/util/file.dart';
 import 'package:medbridge_business/util/preferences.dart';
 import 'package:medbridge_business/util/snackbar.dart';
@@ -58,20 +58,23 @@ class _TravelUpdatesState extends State<TravelUpdates> {
   FocusNode budgetFocus = FocusNode();
 
   final _budgetFormKey = GlobalKey<FormState>();
-  bool apiCompleted = false;
+  bool getTravelStatusApiCompleted = false;
+  bool travelStatusUpdateApiInProgress = false;
   TravelStatus travelStatus;
 
   @override
   void initState() {
     super.initState();
-    getTravelStatusUpdate();
+    if (!widget.isEditable) {
+      getTravelStatusUpdate();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     Widget showItems = Center(child: CircularProgressIndicator());
     if (!widget.isEditable) {
-      if (apiCompleted) {
+      if (getTravelStatusApiCompleted) {
         showItems = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -105,7 +108,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
 
   void getTravelStatusUpdate() async {
     setState(() {
-      apiCompleted = false;
+      getTravelStatusApiCompleted = false;
     });
     var body = {
       "apiKey": API_KEY,
@@ -125,7 +128,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
             .add(documentMetadataFrom(element, 'VISA APPOINTMENT FORM'));
       });
       setState(() {
-        apiCompleted = true;
+        getTravelStatusApiCompleted = true;
       });
     }
   }
@@ -144,7 +147,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       return SizedBox();
     }
     Widget text = SizedBox();
-    if (apiCompleted) {
+    if (travelStatusUpdateApiInProgress) {
       text = CircularProgressIndicator(
         valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
       );
@@ -182,9 +185,15 @@ class _TravelUpdatesState extends State<TravelUpdates> {
 
   Future<void> buttonClicked() async {
     print('Submit in Travel updates clicked');
+    setState(() {
+      travelStatusUpdateApiInProgress = true;
+    });
     if (widget.accoAssistYes) {
       if (!_budgetFormKey.currentState.validate()) {
         print('Travel status form invalid');
+        setState(() {
+          travelStatusUpdateApiInProgress = false;
+        });
         return;
       }
     }
@@ -194,6 +203,9 @@ class _TravelUpdatesState extends State<TravelUpdates> {
         widget.scaffoldKey.currentState.showSnackBar(
           showSnackbarWith("Please upload passport"),
         );
+        setState(() {
+          travelStatusUpdateApiInProgress = false;
+        });
         return;
       }
       if (uploadedVisaAppointmentDocuments.length == 0) {
@@ -201,6 +213,9 @@ class _TravelUpdatesState extends State<TravelUpdates> {
         widget.scaffoldKey.currentState.showSnackBar(
           showSnackbarWith("Please upload visa appointment form"),
         );
+        setState(() {
+          travelStatusUpdateApiInProgress = false;
+        });
         return;
       }
     }
@@ -228,6 +243,9 @@ class _TravelUpdatesState extends State<TravelUpdates> {
         showSnackbarWith("Unable to submit. Try again later"),
       );
     }
+    setState(() {
+      travelStatusUpdateApiInProgress = false;
+    });
   }
 
   String getDocumentsString(List<DocumentMetadata> documents) {
@@ -238,14 +256,6 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       );
     });
     return documentIds.join(",");
-  }
-
-  String getDateString(DateTime dateTime) {
-    String dateString = "";
-    if (dateTime != null) {
-      dateString = dateTime.toIso8601String();
-    }
-    return dateString;
   }
 
   Widget viewableVisaAppointment() {
@@ -395,6 +405,8 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       setState(() {});
     };
     return showDate(
+      context,
+      widget.isEditable,
       visaAppointmentDateTime,
       onConfirm,
       "Desired VISA Appointment Date",
@@ -406,82 +418,13 @@ class _TravelUpdatesState extends State<TravelUpdates> {
       arrivalDateTime = date;
       setState(() {});
     };
-    return showDate(arrivalDateTime, onConfirm, "Expected Arrival Date");
-  }
-
-  void showDatePicker(Function onConfirm) {
-    DatePicker.showDatePicker(
+    return showDate(
       context,
-      theme: DatePickerTheme(
-        containerHeight: 210.0,
-      ),
-      showTitleActions: true,
-      minTime: DateTime.now(),
-      onConfirm: onConfirm,
-      currentTime: DateTime.now(),
-      locale: LocaleType.en,
+      widget.isEditable,
+      arrivalDateTime,
+      onConfirm,
+      "Expected Arrival Date",
     );
-  }
-
-  Widget showDate(DateTime dateTime, Function onConfirm, String hintText) {
-    Function updateDate = () {};
-    Widget changeText = SizedBox();
-    if (widget.isEditable) {
-      changeText = Text(
-        "  Change",
-        style: TextStyle(
-          color: primary,
-          fontSize: 16.0,
-        ),
-      );
-      updateDate = () {
-        showDatePicker(onConfirm);
-      };
-    }
-    return FlatButton(
-      onPressed: updateDate,
-      child: Container(
-        alignment: Alignment.center,
-        height: 50.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Container(
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.date_range,
-                        size: 18.0,
-                        color: primary,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        getDateDisplay(dateTime, hintText),
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-            changeText,
-          ],
-        ),
-      ),
-      color: Colors.white,
-    );
-  }
-
-  String getDateDisplay(DateTime date, String hintText) {
-    if (date == null) {
-      return hintText;
-    }
-    return '${date.year} - ${date.month} - ${date.day}';
   }
 
   viewDocument(DocumentMetadata uploadedDocument) async {

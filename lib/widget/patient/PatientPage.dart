@@ -25,6 +25,7 @@ import 'package:medbridge_business/util/style.dart';
 import 'package:medbridge_business/util/validate.dart';
 import 'package:medbridge_business/widget/patient/HospitalOptions.dart';
 import 'package:medbridge_business/widget/patient/TravelUpdates.dart';
+import 'package:medbridge_business/widget/patient/VisaAppointmentDate.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -170,6 +171,7 @@ class _PatientPageState extends State<PatientPage> {
                   showPatientDetails(),
                   divider(),
                   showStatus(),
+                  showVisaAppointmentDate(),
                   showTravelUpdates(),
                   showPatientPreferencesDetails(),
                   divider(),
@@ -184,6 +186,36 @@ class _PatientPageState extends State<PatientPage> {
         ),
       ),
     );
+  }
+
+  Widget showVisaAppointmentDate() {
+    bool postTravelStatusUpdateFlow =
+        widget.status == Status.VISA_APPOINTMENT ||
+            widget.status == Status.TRAVEL_STATUS_CONFIRMED ||
+            widget.status == Status.PATIENT_RECEIVED ||
+            widget.status == Status.TREATMENT_ONGOING ||
+            widget.status == Status.TREATMENT_COMPLETED;
+    bool travelAssistIsYes = false;
+    bool accoAssistIsYes = false;
+    if (widget.patient != null) {
+      travelAssistIsYes = widget.patient.patientTravelAssist == 'Yes';
+      accoAssistIsYes = widget.patient.patientAccommodationAssist == 'Yes';
+    }
+    bool travelOrAccoAssistSelected = (travelAssistIsYes || accoAssistIsYes);
+    if (postTravelStatusUpdateFlow && travelOrAccoAssistSelected) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          VisaAppointmentDate(
+            patientId: widget.patient.id,
+            status: widget.status,
+            scaffoldKey: _scaffoldKey,
+          ),
+          divider(),
+        ],
+      );
+    }
+    return SizedBox();
   }
 
   Widget showTravelUpdates() {

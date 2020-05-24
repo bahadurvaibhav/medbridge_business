@@ -4,7 +4,6 @@ const String BASE_URL = 'http://connectinghealthcare.in/api/';
 const String BUSINESS_BASE_URL = BASE_URL + 'business/';
 const String LOGIN_URL = BUSINESS_BASE_URL + 'login.php';
 const String UPLOAD_DOCUMENT_URL = BUSINESS_BASE_URL + 'uploadDocument.php';
-//const String GET_HOSPITALS_URL = BUSINESS_BASE_URL + 'getHospitals.php';
 const String GET_AUTOCOMPLETE_TEXT_URL =
     BUSINESS_BASE_URL + 'getAutocompleteText.php';
 const String ADD_PATIENT_URL = BUSINESS_BASE_URL + 'addPatient.php';
@@ -21,3 +20,7 @@ const String TRAVEL_STATUS_UPDATE_URL =
     BUSINESS_BASE_URL + 'travelStatusUpdate.php';
 const String GET_TRAVEL_STATUS_UPDATE_URL =
     BUSINESS_BASE_URL + 'getTravelStatusUpdate.php';
+
+const String SUPER_ADMIN_BASE_URL = BASE_URL + 'superadmin/';
+const String GET_VISA_APPOINTMENT_DATE_URL =
+    SUPER_ADMIN_BASE_URL + 'getVisaAppointmentDate.php';
