@@ -82,149 +82,151 @@ class _ProfileState extends State<Profile> {
 
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: <Widget>[
-          Icon(
-            Icons.person_pin,
-            size: 150,
-          ),
-          SizedBox(height: 30),
-          Form(
-            key: _profileFormKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                TextFormField(
-                  controller: nameController,
-                  textInputAction: TextInputAction.next,
-                  focusNode: nameFocus,
-                  onFieldSubmitted: (term) {
-                    nameFocus.unfocus();
-                    FocusScope.of(context).requestFocus(emailFocus);
-                  },
-                  style: TextStyle(color: Colors.blue),
-                  validator: validateName,
-                  decoration: InputDecoration(
-                    hintText: 'Name*',
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: emailController,
-                  textInputAction: TextInputAction.next,
-                  focusNode: emailFocus,
-                  onFieldSubmitted: (term) {
-                    emailFocus.unfocus();
-                    FocusScope.of(context).requestFocus(countryFocus);
-                  },
-                  style: TextStyle(color: Colors.blue),
-                  validator: validateEmail,
-                  decoration: InputDecoration(
-                    hintText: 'Email*',
-                  ),
-                ),
-                SizedBox(height: 15),
-                selectGender(),
-                SizedBox(height: 10),
-                TypeAheadFormField(
-                  textFieldConfiguration: TextFieldConfiguration(
-                    controller: countryController,
+      child: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            Icon(
+              Icons.person_pin,
+              size: 150,
+            ),
+            SizedBox(height: 30),
+            Form(
+              key: _profileFormKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameController,
                     textInputAction: TextInputAction.next,
-                    focusNode: countryFocus,
+                    focusNode: nameFocus,
+                    onFieldSubmitted: (term) {
+                      nameFocus.unfocus();
+                      FocusScope.of(context).requestFocus(emailFocus);
+                    },
                     style: TextStyle(color: Colors.blue),
-                    decoration: InputDecoration(hintText: 'Country'),
-                    onSubmitted: (term) {
-                      countryFocus.unfocus();
-                      FocusScope.of(context).requestFocus(mobileFocus);
+                    validator: validateName,
+                    decoration: InputDecoration(
+                      hintText: 'Name*',
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  TextFormField(
+                    controller: emailController,
+                    textInputAction: TextInputAction.next,
+                    focusNode: emailFocus,
+                    onFieldSubmitted: (term) {
+                      emailFocus.unfocus();
+                      FocusScope.of(context).requestFocus(countryFocus);
+                    },
+                    style: TextStyle(color: Colors.blue),
+                    validator: validateEmail,
+                    decoration: InputDecoration(
+                      hintText: 'Email*',
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  selectGender(),
+                  SizedBox(height: 10),
+                  TypeAheadFormField(
+                    textFieldConfiguration: TextFieldConfiguration(
+                      controller: countryController,
+                      textInputAction: TextInputAction.next,
+                      focusNode: countryFocus,
+                      style: TextStyle(color: Colors.blue),
+                      decoration: InputDecoration(hintText: 'Country'),
+                      onSubmitted: (term) {
+                        countryFocus.unfocus();
+                        FocusScope.of(context).requestFocus(mobileFocus);
+                      },
+                    ),
+                    suggestionsCallback: (pattern) {
+                      List<Country> filteredCountries = new List();
+                      countryList.forEach((country) {
+                        if (country.name
+                            .toLowerCase()
+                            .contains(pattern.toLowerCase())) {
+                          filteredCountries.add(country);
+                        }
+                      });
+                      return filteredCountries;
+                    },
+                    itemBuilder: (context, Country suggestion) {
+                      return ListTile(
+                        title: Row(
+                          children: <Widget>[
+                            CountryPickerUtils.getDefaultFlagImage(suggestion),
+                            SizedBox(
+                              width: 8.0,
+                            ),
+                            Text(suggestion.name),
+                            Text(" ( +" + suggestion.phoneCode + " )"),
+                          ],
+                        ),
+                      );
+                    },
+                    transitionBuilder: (context, suggestionsBox, controller) {
+                      return suggestionsBox;
+                    },
+                    onSuggestionSelected: (Country suggestion) {
+                      selectedCountry = suggestion.name;
+                      selectedPhoneCode = suggestion.phoneCode;
+                      countryController.text =
+                          selectedCountry + " ( +" + selectedPhoneCode + " )";
                     },
                   ),
-                  suggestionsCallback: (pattern) {
-                    List<Country> filteredCountries = new List();
-                    countryList.forEach((country) {
-                      if (country.name
-                          .toLowerCase()
-                          .contains(pattern.toLowerCase())) {
-                        filteredCountries.add(country);
-                      }
-                    });
-                    return filteredCountries;
-                  },
-                  itemBuilder: (context, Country suggestion) {
-                    return ListTile(
-                      title: Row(
-                        children: <Widget>[
-                          CountryPickerUtils.getDefaultFlagImage(suggestion),
-                          SizedBox(
-                            width: 8.0,
+                  SizedBox(height: 10),
+                  TextFormField(
+                    controller: mobileController,
+                    textInputAction: TextInputAction.next,
+                    focusNode: mobileFocus,
+                    onFieldSubmitted: (term) {
+                      mobileFocus.unfocus();
+                      FocusScope.of(context).requestFocus(addressFocus);
+                    },
+                    style: TextStyle(color: Colors.blue),
+                    decoration: InputDecoration(
+                      hintText: 'Mobile',
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  TextFormField(
+                    controller: addressController,
+                    textInputAction: TextInputAction.next,
+                    focusNode: addressFocus,
+                    style: TextStyle(color: Colors.blue),
+                    decoration: InputDecoration(
+                      hintText: 'Address',
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  showRewardPercentage(),
+                  SizedBox(height: 20),
+                  RaisedButton(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    color: primary,
+                    child: Container(
+                      height: 50,
+                      child: Center(
+                        child: Text(
+                          'Update Profile',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.normal,
+                            fontSize: 24,
+                            letterSpacing: 1.2,
                           ),
-                          Text(suggestion.name),
-                          Text(" ( +" + suggestion.phoneCode + " )"),
-                        ],
-                      ),
-                    );
-                  },
-                  transitionBuilder: (context, suggestionsBox, controller) {
-                    return suggestionsBox;
-                  },
-                  onSuggestionSelected: (Country suggestion) {
-                    selectedCountry = suggestion.name;
-                    selectedPhoneCode = suggestion.phoneCode;
-                    countryController.text =
-                        selectedCountry + " ( +" + selectedPhoneCode + " )";
-                  },
-                ),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: mobileController,
-                  textInputAction: TextInputAction.next,
-                  focusNode: mobileFocus,
-                  onFieldSubmitted: (term) {
-                    mobileFocus.unfocus();
-                    FocusScope.of(context).requestFocus(addressFocus);
-                  },
-                  style: TextStyle(color: Colors.blue),
-                  decoration: InputDecoration(
-                    hintText: 'Mobile',
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: addressController,
-                  textInputAction: TextInputAction.next,
-                  focusNode: addressFocus,
-                  style: TextStyle(color: Colors.blue),
-                  decoration: InputDecoration(
-                    hintText: 'Address',
-                  ),
-                ),
-                SizedBox(height: 20),
-                showRewardPercentage(),
-                SizedBox(height: 20),
-                RaisedButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  color: primary,
-                  child: Container(
-                    height: 50,
-                    child: Center(
-                      child: Text(
-                        'Update Profile',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.normal,
-                          fontSize: 24,
-                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
+                    onPressed: updateProfileClicked,
                   ),
-                  onPressed: updateProfileClicked,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -332,7 +334,8 @@ class _ProfileState extends State<Profile> {
             ),
           ),
           Text(rewardPercentageController.text),
-          Text('% (for each treatment completed)'),
+          SizedBox(width: 5),
+          Expanded(child: Text('% (for each treatment completed)')),
         ],
       );
     }
