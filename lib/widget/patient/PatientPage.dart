@@ -892,17 +892,19 @@ class _PatientPageState extends State<PatientPage> {
               ),
             ),
             SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(widget.patient.patientName, style: patientNameStyle()),
-                SizedBox(height: 10),
-                Text(widget.patient.patientPhone),
-                SizedBox(height: 10),
-                Text(widget.patient.patientEmail),
-                SizedBox(height: 10),
-                Text(widget.patient.patientCountry),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(widget.patient.patientName, style: patientNameStyle()),
+                  SizedBox(height: 10),
+                  Text(widget.patient.patientPhone),
+                  SizedBox(height: 10),
+                  Text(widget.patient.patientEmail),
+                  SizedBox(height: 10),
+                  Text(widget.patient.patientCountry),
+                ],
+              ),
             ),
           ],
         ),

@@ -330,8 +330,7 @@ class HospitalOptionsState extends State<HospitalOptions> {
       child: Card(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
             children: <Widget>[
               actionButton,
               showTitleValue('Hospital Name', option.hospitalName),
