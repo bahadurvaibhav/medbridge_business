@@ -27,6 +27,7 @@ class PatientResponse {
   DateTime created;
   List<PatientDocument> documents;
   List<HospitalOptionResponse> hospitalOptions;
+  String finalCost;
 
   PatientResponse({
     this.id,
@@ -44,6 +45,7 @@ class PatientResponse {
     this.created,
     this.documents,
     this.hospitalOptions,
+    this.finalCost,
   });
 
   factory PatientResponse.fromJson(Map<String, dynamic> json) =>
@@ -66,6 +68,7 @@ class PatientResponse {
         hospitalOptions: List<HospitalOptionResponse>.from(
             json["hospitalOptions"]
                 .map((x) => HospitalOptionResponse.fromJson(x))),
+        finalCost: json["finalCost"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -85,5 +88,6 @@ class PatientResponse {
         "documents": List<dynamic>.from(documents.map((x) => x.toJson())),
         "hospitalOptions":
             List<dynamic>.from(hospitalOptions.map((x) => x.toJson())),
+        "finalCost": finalCost,
       };
 }

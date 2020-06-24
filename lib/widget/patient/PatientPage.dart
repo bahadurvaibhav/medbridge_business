@@ -208,6 +208,24 @@ class _PatientPageState extends State<PatientPage> {
           spaceToNextField,
         ],
       );
+    } else if (widget.status == Status.TREATMENT_COMPLETED) {
+      var spaceHeadingToValue = SizedBox(height: 8);
+      var spaceToNextField = SizedBox(height: 16);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'TREATMENT COMPLETED:',
+            style: addPatientHeadingStyle(),
+          ),
+          spaceToNextField,
+          Text('COST (in USD):', style: goldenHeadingStyle()),
+          spaceHeadingToValue,
+          Text(widget.patient.finalCost),
+          spaceToNextField,
+          divider(),
+        ],
+      );
     }
     return SizedBox();
   }
