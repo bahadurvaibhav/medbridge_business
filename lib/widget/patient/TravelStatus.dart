@@ -86,6 +86,8 @@ class _TravelStatusState extends State<TravelStatus> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          travelStatusHeading(),
+          SizedBox(height: 6),
           showDocuments(
             context,
             widget.isEditable,
@@ -106,10 +108,19 @@ class _TravelStatusState extends State<TravelStatus> {
 
   String PICK_UP_REQUESTED = 'Pick up requested';
 
+  Widget travelStatusHeading() {
+    return Text(
+      'TRAVEL STATUS:',
+      style: addPatientHeadingStyle(),
+    );
+  }
+
   Widget editableTravelStatus() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        travelStatusHeading(),
+        SizedBox(height: 6),
         showDocuments(
           context,
           widget.isEditable,
