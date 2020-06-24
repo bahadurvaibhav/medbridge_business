@@ -22,6 +22,8 @@ const String GET_TRAVEL_STATUS_UPDATE_URL =
     BUSINESS_BASE_URL + 'getTravelStatusUpdate.php';
 const String UPDATE_STATUS_VISA_APPOINTMENT_URL =
     BUSINESS_BASE_URL + 'updateStatusVisaAppointment.php';
+const String GET_TRAVEL_STATUS_CONFIRMED_URL =
+    BUSINESS_BASE_URL + 'getTravelStatusConfirmed.php';
 
 const String SUPER_ADMIN_BASE_URL = BASE_URL + 'superadmin/';
 const String GET_VISA_APPOINTMENT_DATE_URL =

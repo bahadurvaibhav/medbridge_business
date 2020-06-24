@@ -24,6 +24,7 @@ import 'package:medbridge_business/util/snackbar.dart';
 import 'package:medbridge_business/util/style.dart';
 import 'package:medbridge_business/util/validate.dart';
 import 'package:medbridge_business/widget/patient/HospitalOptions.dart';
+import 'package:medbridge_business/widget/patient/TravelStatus.dart';
 import 'package:medbridge_business/widget/patient/TravelUpdates.dart';
 import 'package:medbridge_business/widget/patient/VisaAppointmentDate.dart';
 import 'package:path/path.dart' as path;
@@ -172,6 +173,7 @@ class _PatientPageState extends State<PatientPage> {
                   divider(),
                   showStatus(),
                   updateStatusButton(),
+                  showTravelStatus(),
                   showVisaAppointmentDate(),
                   showTravelUpdates(),
                   showHospitalOptions(),
@@ -189,26 +191,46 @@ class _PatientPageState extends State<PatientPage> {
     );
   }
 
-  bool updateStatusVisaAppointmentInProgress = false;
+  Widget showTravelStatus() {
+    bool isEditable = widget.status == Status.VISA_APPOINTMENT;
+    bool inTravelFlow =
+        isEditable || widget.status == Status.TRAVEL_STATUS_CONFIRMED;
+    bool postTravelFlow = widget.status == Status.PATIENT_RECEIVED ||
+        widget.status == Status.TREATMENT_ONGOING ||
+        widget.status == Status.TREATMENT_COMPLETED;
+    bool travelAssistIsYes = false;
+    bool accoAssistIsYes = false;
+    if (widget.patient != null) {
+      travelAssistIsYes = widget.patient.patientTravelAssist == 'Yes';
+      accoAssistIsYes = widget.patient.patientAccommodationAssist == 'Yes';
+    }
+    bool travelUpdatesShownByStatus = (inTravelFlow || postTravelFlow);
+    bool travelOrAccoAssistSelected = (travelAssistIsYes || accoAssistIsYes);
+    bool showTravelStatus =
+        travelUpdatesShownByStatus && travelOrAccoAssistSelected;
+    if (!showTravelStatus) {
+      return SizedBox();
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          TravelStatus(
+            patientId: widget.patient.id,
+            status: widget.status,
+            scaffoldKey: _scaffoldKey,
+            isEditable: isEditable,
+          ),
+          divider(),
+        ],
+      );
+    }
+  }
+
   Widget spaceHeadingToValue = SizedBox(height: 8);
   Widget spaceToNextField = SizedBox(height: 16);
 
   Widget updateStatusButton() {
-    if (widget.status == Status.VISA_APPOINTMENT) {
-      return Column(
-        children: <Widget>[
-          showSubmitButtonWithTitle(
-            updateStatusVisaAppointmentInProgress,
-            updateStatusVisaAppointmentClicked,
-            "Click here if " +
-                statusReadable.reverse[Status.VISA_APPOINTMENT] +
-                " completed",
-            18,
-          ),
-          spaceToNextField,
-        ],
-      );
-    } else if (widget.status == Status.TREATMENT_COMPLETED) {
+    if (widget.status == Status.TREATMENT_COMPLETED) {
       var spaceHeadingToValue = SizedBox(height: 8);
       var spaceToNextField = SizedBox(height: 16);
       return Column(
@@ -228,75 +250,6 @@ class _PatientPageState extends State<PatientPage> {
       );
     }
     return SizedBox();
-  }
-
-  Widget showSubmitButtonWithTitle(
-      bool inProgress, Function buttonClicked, String title, double fontSize) {
-    Widget text = SizedBox();
-    if (inProgress) {
-      text = CircularProgressIndicator(
-        valueColor: new AlwaysStoppedAnimation<Color>(Colors.white),
-      );
-    } else {
-      text = Text(
-        title,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.normal,
-          fontSize: fontSize,
-          letterSpacing: 1.2,
-        ),
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Expanded(
-          child: RaisedButton(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            color: primary,
-            child: Container(
-              height: 50,
-              child: Center(child: text),
-            ),
-            onPressed: buttonClicked,
-          ),
-        ),
-      ],
-    );
-  }
-
-  updateStatusVisaAppointmentClicked() async {
-    setState(() {
-      updateStatusVisaAppointmentInProgress = true;
-    });
-    var body = {
-      "patientId": widget.patient.id,
-      "apiKey": API_KEY,
-    };
-    print(body.toString());
-    final response = await post(UPDATE_STATUS_VISA_APPOINTMENT_URL, body);
-    StatusMsg statusMsg = responseFromJson(response.body);
-    if (statusMsg.status == 200) {
-      print('Status visa appointment update API success');
-      setState(() {
-        updateStatusVisaAppointmentInProgress = false;
-      });
-      _scaffoldKey.currentState
-          .showSnackBar(showSnackbarWithCheck("Status updated successfully"));
-      Navigator.pop(context);
-    } else {
-      print('Status visa appointment update API failed with msg: ' +
-          statusMsg.msg);
-      setState(() {
-        updateStatusVisaAppointmentInProgress = false;
-      });
-      _scaffoldKey.currentState.showSnackBar(
-          showSnackbarWith("Unable to update status. Try again later."));
-    }
   }
 
   Widget showVisaAppointmentDate() {
@@ -654,7 +607,7 @@ class _PatientPageState extends State<PatientPage> {
         spaceHeadingToValue,
         Text(patientTravelAssist),
         spaceToNextField,
-        Text('Patient Needs Accomodation Assistance::',
+        Text('Patient Needs Accommodation Assistance::',
             style: goldenHeadingStyle()),
         spaceHeadingToValue,
         Text(patientAccommodationAssist),
@@ -694,7 +647,7 @@ class _PatientPageState extends State<PatientPage> {
           Text('Does patient needs travel assistance?'),
           selectTravelAssist(),
           SizedBox(height: 10),
-          Text('Does patient needs accomodation assistance?'),
+          Text('Does patient needs accommodation assistance?'),
           selectAccommodationAssist(),
         ],
       ),

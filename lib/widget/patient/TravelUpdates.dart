@@ -333,7 +333,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
               style: TextStyle(color: Colors.blue),
               validator: validateName,
               decoration: InputDecoration(
-                hintText: 'Budget for accomodation*',
+                hintText: 'Budget for accommodation*',
               ),
             ),
           ),
@@ -469,7 +469,7 @@ class _TravelUpdatesState extends State<TravelUpdates> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Budget for accomodation:',
+            'Budget for accommodation:',
             style: goldenHeadingStyle(),
           ),
           Text(travelStatus.budgetForAcco),
